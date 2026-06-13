@@ -62,6 +62,23 @@ p { text-wrap: pretty; }
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(232,184,115,0.35), transparent);
 }
+/* a hint of colorful ambience — soft drifting hued glows over the dark */
+.sky::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 38% at 18% 28%, rgba(116, 205, 189, 0.11), transparent 70%),
+    radial-gradient(42% 42% at 82% 22%, rgba(150, 130, 245, 0.11), transparent 70%),
+    radial-gradient(40% 40% at 65% 82%, rgba(232, 150, 120, 0.10), transparent 70%);
+  filter: blur(36px);
+  animation: ambience 26s ease-in-out infinite alternate;
+}
+@keyframes ambience {
+  0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.75; }
+  100% { transform: translate3d(-3%, 2.5%, 0) scale(1.12); opacity: 1; }
+}
 .northstar {
   position: fixed;
   top: 12%; left: 50%;
@@ -114,7 +131,7 @@ input:focus-visible, textarea:focus-visible {
 *::-webkit-scrollbar { width: 9px; height: 9px; }
 *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 9px; }
 
-@media (prefers-reduced-motion: reduce) { .northstar { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .northstar, .sky::before { animation: none; } }
 
 /* ---------- accessibility mode ---------- */
 body { font-size: 1rem; }
