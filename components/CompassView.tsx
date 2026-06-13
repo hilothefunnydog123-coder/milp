@@ -15,6 +15,9 @@ import {
   Brain,
   ThumbsUp,
   LifeBuoy,
+  Volume2,
+  Square,
+  MessageSquareQuote,
 } from "lucide-react";
 import AnimatedNumber from "./AnimatedNumber";
 import type { CompassPath } from "@/lib/types";
@@ -29,6 +32,45 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
   const [helped, setHelped] = useState<Record<string, boolean>>({});
   const [runs, setRuns] = useState(path.community?.runs ?? 0);
   const [copied, setCopied] = useState(false);
+  const [scripts, setScripts] = useState<Record<string, string>>({});
+  const [scriptBusy, setScriptBusy] = useState<string | null>(null);
+  const [speaking, setSpeaking] = useState(false);
+
+  async function getScript(id: string, title: string, actionText: string) {
+    if (scripts[id]) return setScripts((s) => ({ ...s, [id]: "" }));
+    setScriptBusy(id);
+    try {
+      const lang = typeof window !== "undefined" ? localStorage.getItem("yn_lang") || "English" : "English";
+      const res = await fetch("/api/compass", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "script", title, stepAction: actionText, language: lang }),
+      });
+      const data = await res.json();
+      setScripts((s) => ({ ...s, [id]: data.script || "" }));
+    } finally {
+      setScriptBusy(null);
+    }
+  }
+
+  function speak() {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const text =
+      path.summary +
+      ". Your steps: " +
+      path.steps.map((s, i) => `Step ${i + 1}. ${s.title}. ${s.plain} ${s.action}`).join(" ");
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95;
+    u.onend = () => setSpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+    setSpeaking(true);
+  }
 
   function persist(key: string, val: Record<string, boolean>) {
     if (!readOnly) localStorage.setItem(key, JSON.stringify(val));
@@ -129,10 +171,16 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className="h-full rounded-full trail" />
         </div>
         {!readOnly && (
-          <button onClick={share} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-ink transition hover:border-gold/50">
-            {copied ? <Check className="h-4 w-4 text-teal" /> : <Share2 className="h-4 w-4 text-gold" />}
-            {copied ? "Link copied — share it with someone you trust" : "Share my path with a helper"}
-          </button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-ink transition hover:border-gold/50">
+              {copied ? <Check className="h-4 w-4 text-teal" /> : <Share2 className="h-4 w-4 text-gold" />}
+              {copied ? "Link copied" : "Share with a helper"}
+            </button>
+            <button onClick={speak} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-ink transition hover:border-gold/50">
+              {speaking ? <Square className="h-4 w-4 text-teal" /> : <Volume2 className="h-4 w-4 text-gold" />}
+              {speaking ? "Stop" : "Listen to my plan"}
+            </button>
+          </div>
         )}
       </div>
 
@@ -197,6 +245,12 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
                     </button>
                   )}
                   {!readOnly && (
+                    <button onClick={() => getScript(step.id, step.title, step.action)} className="inline-flex items-center gap-1.5 text-sm text-gold transition hover:opacity-80">
+                      <MessageSquareQuote className="h-4 w-4" />
+                      {scriptBusy === step.id ? "Writing…" : scripts[step.id] ? "Hide script" : "What do I say?"}
+                    </button>
+                  )}
+                  {!readOnly && (
                     <button
                       onClick={() => markHelped(step.id, step.category)}
                       className={`inline-flex items-center gap-1.5 text-sm transition ${helped[step.id] ? "text-teal" : "text-muted hover:text-ink"}`}
@@ -209,6 +263,14 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 rounded-xl bg-teal/5 p-3 text-sm leading-relaxed text-ink/90">
                     {explain[step.id]}
                   </motion.p>
+                )}
+                {scripts[step.id] && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 rounded-xl border border-gold/20 bg-gold/5 p-3 text-sm leading-relaxed">
+                    <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-gold">
+                      <MessageSquareQuote className="h-3.5 w-3.5" /> Read this when you call — you&apos;ve got this
+                    </div>
+                    <p className="whitespace-pre-wrap text-ink/90">{scripts[step.id]}</p>
+                  </motion.div>
                 )}
               </div>
             </motion.div>

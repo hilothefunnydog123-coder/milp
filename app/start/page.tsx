@@ -23,6 +23,7 @@ export default function Start() {
   const [situation, setSituation] = useState("");
   const [location, setLocation] = useState("");
   const [household, setHousehold] = useState("");
+  const [language, setLanguage] = useState("English");
   const [listening, setListening] = useState(false);
   const [loading, setLoading] = useState(false);
   const [advocate, setAdvocate] = useState(false);
@@ -79,11 +80,12 @@ export default function Start() {
       const res = await fetch("/api/compass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate", situation, location, household }),
+        body: JSON.stringify({ action: "generate", situation, location, household, language }),
       });
       const data = await res.json();
       if (data.path) {
         localStorage.setItem("yn_path", JSON.stringify(data.path));
+        localStorage.setItem("yn_lang", language);
         localStorage.setItem("yn_progress", JSON.stringify({}));
         router.push("/path");
       }
@@ -187,6 +189,15 @@ export default function Start() {
             <label className="text-sm text-muted">Who&apos;s with you? (optional)</label>
             <input value={household} onChange={(e) => setHousehold(e.target.value)} placeholder="e.g. just me / 2 kids" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
           </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="text-sm text-muted">Show my plan in</label>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60">
+            {["English", "Español", "中文 (Chinese)", "Tiếng Việt (Vietnamese)", "Tagalog", "العربية (Arabic)", "Русский (Russian)", "Français", "Português", "한국어 (Korean)"].map((l) => (
+              <option key={l} value={l} className="bg-[#0a0e17]">{l}</option>
+            ))}
+          </select>
         </div>
 
         <button onClick={findPath} disabled={!situation.trim()} className="btn-gold mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full py-4 text-lg disabled:opacity-40">
