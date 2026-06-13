@@ -18,12 +18,16 @@ import {
   Volume2,
   Square,
   MessageSquareQuote,
+  QrCode,
+  Printer,
 } from "lucide-react";
+import QRCode from "qrcode";
 import AnimatedNumber from "./AnimatedNumber";
 import CallForMe from "./CallForMe";
 import Guardian from "./Guardian";
 import Companion from "./Companion";
 import ShelterMap from "./ShelterMap";
+import WeatherUrgency from "./WeatherUrgency";
 import type { CompassPath } from "@/lib/types";
 
 const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
@@ -39,6 +43,12 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
   const [scripts, setScripts] = useState<Record<string, string>>({});
   const [scriptBusy, setScriptBusy] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [qr, setQr] = useState("");
+
+  async function showQr() {
+    if (qr) return setQr("");
+    setQr(await QRCode.toDataURL(window.location.origin, { margin: 1, width: 220, color: { dark: "#0a0e17", light: "#ffffff" } }));
+  }
 
   async function getScript(id: string, title: string, actionText: string) {
     if (scripts[id]) return setScripts((s) => ({ ...s, [id]: "" }));
@@ -139,6 +149,9 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
         <span>Local help 24/7: <a href="tel:211" className="font-semibold text-ink underline-offset-2 hover:underline">211</a></span>
       </div>
 
+      {/* live weather-aware urgency (only shows when it's cold/wet) */}
+      {!readOnly && <WeatherUrgency location={path.location} />}
+
       {/* summary */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mt-6">
         <div className="flex items-center gap-2 text-sm text-gold"><Sparkles className="h-4 w-4" /> Your path · {path.location}</div>
@@ -146,7 +159,7 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
       </motion.div>
 
       {/* THE hero action — let YNorth make the call for you */}
-      {!readOnly && <CallForMe resources={path.localResources} />}
+      {!readOnly && <div className="no-print"><CallForMe resources={path.localResources} /></div>}
 
       {/* learning model — community wisdom */}
       {(path.community?.top?.length ?? 0) > 0 && (
@@ -182,7 +195,7 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className="h-full rounded-full trail" />
         </div>
         {!readOnly && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="no-print mt-4 flex flex-wrap gap-2">
             <button onClick={share} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-ink transition hover:border-gold/50">
               {copied ? <Check className="h-4 w-4 text-teal" /> : <Share2 className="h-4 w-4 text-gold" />}
               {copied ? "Link copied" : "Share with a helper"}
@@ -191,7 +204,20 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
               {speaking ? <Square className="h-4 w-4 text-teal" /> : <Volume2 className="h-4 w-4 text-gold" />}
               {speaking ? "Stop" : "Listen to my plan"}
             </button>
+            <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-ink transition hover:border-gold/50">
+              <Printer className="h-4 w-4 text-gold" /> Print / Save PDF
+            </button>
+            <button onClick={showQr} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-ink transition hover:border-gold/50">
+              <QrCode className="h-4 w-4 text-gold" /> {qr ? "Hide QR" : "Take it with you"}
+            </button>
           </div>
+        )}
+        {qr && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="no-print mt-4 flex items-center gap-4 rounded-2xl border border-[var(--line)] p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qr} alt="QR code to open YNorth" className="h-28 w-28 rounded-lg" />
+            <p className="text-sm text-muted">Scan to open YNorth on any phone — keep it with you, or hand it to someone who needs it.</p>
+          </motion.div>
         )}
       </div>
 
@@ -290,10 +316,10 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
       </div>
 
       {/* autonomous agent: keeps watching, books, guides transport */}
-      {!readOnly && <Guardian resources={path.localResources} location={path.location} />}
+      {!readOnly && <div className="no-print"><Guardian resources={path.localResources} location={path.location} /></div>}
 
       {/* follow-up companion: gentle check-ins tied to the next step */}
-      {!readOnly && <Companion path={path} />}
+      {!readOnly && <div className="no-print"><Companion path={path} /></div>}
 
       {/* documents */}
       {path.documents.length > 0 && (
@@ -341,10 +367,10 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
       )}
 
       {/* shelter map — Jarvis-style HUD, accessible, real OSM data */}
-      {!readOnly && <ShelterMap location={path.location} resources={path.localResources} />}
+      {!readOnly && <div className="no-print"><ShelterMap location={path.location} resources={path.localResources} /></div>}
 
       {/* transparency: what AI is doing the work */}
-      <div className="mt-10 rounded-2xl border border-[var(--line)] p-5">
+      <div className="no-print mt-10 rounded-2xl border border-[var(--line)] p-5">
         <div className="flex items-center gap-2 text-sm font-semibold text-muted"><Sparkles className="h-4 w-4 text-gold" /> How YNorth&apos;s AI works</div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           {[
