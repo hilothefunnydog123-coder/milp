@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { callGemini, extractJson, IS_LIVE } from "@/lib/gemini";
+import {
+  callGemini,
+  callGeminiGrounded,
+  extractJson,
+  extractJsonArray,
+  IS_LIVE,
+} from "@/lib/gemini";
 import { RESOURCES, RESOURCE_KEYS } from "@/lib/resources";
 import { mockPath, plainExplainMock } from "@/lib/mock";
-import type { CompassPath, CompassStep, Intake, Stage } from "@/lib/types";
+import type { CompassPath, CompassStep, Intake, LocalResource, Source, Stage } from "@/lib/types";
 
 const STAGES: Stage[] = ["now", "soon", "later"];
 
@@ -36,9 +42,40 @@ function sanitize(raw: Record<string, unknown>, intake: Intake): CompassPath {
     steps: steps.length ? steps : mockPath(intake).steps,
     documents: documents.length ? documents : mockPath(intake).documents,
     resources: Array.from(new Set(resources)),
+    localResources: [],
+    sources: [],
     location: intake.location || "your area",
     createdAt: new Date().toISOString(),
   };
+}
+
+/** Grounded search for REAL local orgs near the person, tailored to their situation. */
+async function findLocalResources(
+  intake: Intake
+): Promise<{ localResources: LocalResource[]; sources: Source[] }> {
+  if (!intake.location.trim()) return { localResources: [], sources: [] };
+  const prompt = `Find 3 to 5 REAL, currently-operating organizations or programs in or near "${intake.location}" that can directly help a person in this situation: "${intake.situation}".
+
+Prioritize: emergency shelter, the local Continuum of Care / Coordinated Entry, the area's Public Housing Authority, rental assistance, food, and any service matching their specific needs.
+
+Only include organizations you can actually find. For each, give a short helpsWith and a real contact (phone or website) when available.
+
+Return ONLY a JSON array, no prose:
+[{ "name": "...", "helpsWith": "...", "contact": "..." }]
+If you cannot find real local ones, return [].`;
+
+  const { text, sources } = await callGeminiGrounded(prompt, 0.2);
+  const arr = extractJsonArray(text);
+  const localResources: LocalResource[] = arr
+    .filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null)
+    .slice(0, 5)
+    .map((x) => ({
+      name: String(x.name || "").slice(0, 100),
+      helpsWith: String(x.helpsWith || "").slice(0, 160),
+      contact: x.contact ? String(x.contact).slice(0, 120) : undefined,
+    }))
+    .filter((r) => r.name);
+  return { localResources, sources };
 }
 
 export async function POST(req: NextRequest) {
@@ -88,9 +125,15 @@ Return ONLY raw JSON, no markdown:
   "resources": ["<keys from the list that apply to this person>"]
 }`;
 
-    const raw = await callGemini(prompt, 2000, 0.5);
+    // Build the tailored path and find real local resources in parallel.
+    const [raw, local] = await Promise.all([
+      callGemini(prompt, 2000, 0.5),
+      findLocalResources(intake),
+    ]);
     const parsed = extractJson(raw);
     const path = parsed ? sanitize(parsed, intake) : mockPath(intake);
+    path.localResources = local.localResources;
+    path.sources = local.sources;
     return NextResponse.json({ path, live: IS_LIVE });
   }
 

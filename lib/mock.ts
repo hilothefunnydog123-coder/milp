@@ -149,6 +149,8 @@ export function mockPath(intake: Intake): CompassPath {
     steps,
     documents,
     resources: Array.from(new Set(resources)),
+    localResources: [],
+    sources: [],
     location: loc,
     createdAt: new Date().toISOString(),
   };
