@@ -36,7 +36,7 @@ export default function MapInner({ center, pins }: { center: { lat: number; lng:
       {/* dark "HUD" basemap — free, no API key (CARTO dark) */}
       <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
 
-      <Marker position={[center.lat, center.lng]} icon={youIcon}>
+      <Marker position={[center.lat, center.lng]} icon={youIcon} eventHandlers={{ click: (e) => e.target.openTooltip() }}>
         <Tooltip direction="top" offset={[0, -8]} className="yn-tip">
           <strong>You are here</strong>
           <br />Your area
@@ -46,7 +46,7 @@ export default function MapInner({ center, pins }: { center: { lat: number; lng:
       {pins.map((p, i) => {
         const status = p.status ?? "unsure";
         return (
-          <Marker key={i} position={[p.lat, p.lng]} icon={ICONS[status]}>
+          <Marker key={i} position={[p.lat, p.lng]} icon={ICONS[status]} eventHandlers={{ click: (e) => e.target.openTooltip() }}>
             <Tooltip direction="top" offset={[0, -8]} className="yn-tip">
               <strong>{p.name}</strong>
               <br />{p.address}
