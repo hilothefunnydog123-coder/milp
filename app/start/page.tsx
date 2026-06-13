@@ -143,7 +143,7 @@ export default function Start() {
         <motion.p key={msg} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="h-5 text-muted">
           {msg}
         </motion.p>
-        <div className="h-2 w-72 max-w-[80vw] overflow-hidden rounded-full bg-black/[0.06]">
+        <div className="h-2 w-72 max-w-[80vw] overflow-hidden rounded-full bg-white/10">
           <motion.div
             initial={{ width: "0%" }}
             animate={{ width: "94%" }}
@@ -192,7 +192,7 @@ export default function Start() {
               onClick={toggleMic}
               aria-label={listening ? "Stop voice input" : "Start voice input"}
               className={`absolute bottom-0 right-0 flex h-11 w-11 items-center justify-center rounded-full transition ${
-                listening ? "bg-[var(--rose)]/15 text-[var(--rose)]" : "bg-black/[0.05] text-ink hover:bg-black/[0.09]"
+                listening ? "bg-rose-500/30 text-rose-200" : "bg-white/8 text-ink hover:bg-white/15"
               }`}
             >
               {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
@@ -217,17 +217,17 @@ export default function Start() {
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-sm text-muted">Where are you? (city or ZIP)</label>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Milpitas, CA" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-black/[0.04] px-4 py-3 outline-none focus:border-gold/60" />
+            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Milpitas, CA" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
           </div>
           <div>
             <label className="text-sm text-muted">Who&apos;s with you? (optional)</label>
-            <input value={household} onChange={(e) => setHousehold(e.target.value)} placeholder="e.g. just me / 2 kids" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-black/[0.04] px-4 py-3 outline-none focus:border-gold/60" />
+            <input value={household} onChange={(e) => setHousehold(e.target.value)} placeholder="e.g. just me / 2 kids" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
           </div>
         </div>
 
         <div className="mt-4">
           <label className="text-sm text-muted">Show my plan in</label>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-black/[0.04] px-4 py-3 outline-none focus:border-gold/60">
+          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60">
             {["English", "Español", "中文 (Chinese)", "Tiếng Việt (Vietnamese)", "Tagalog", "العربية (Arabic)", "Русский (Russian)", "Français", "Português", "한국어 (Korean)"].map((l) => (
               <option key={l} value={l} className="bg-[#0a0e17]">{l}</option>
             ))}

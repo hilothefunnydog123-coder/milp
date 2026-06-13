@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 const G = "#e8b873"; // gold
 const T = "#74cdbd"; // teal
-const I = "#4a4035"; // warm ink line, reads on light backgrounds
+const I = "#eef1f6"; // ink
 
 const draw = {
   hidden: { pathLength: 0, opacity: 0 },
