@@ -8,25 +8,32 @@ import {
 } from "@/lib/gemini";
 import { RESOURCES, RESOURCE_KEYS } from "@/lib/resources";
 import { mockPath, plainExplainMock } from "@/lib/mock";
+import {
+  CATEGORY_LABEL,
+  deriveTags,
+  noteRun,
+  recommend,
+  stats,
+  type Category,
+} from "@/lib/brain";
 import type { CompassPath, CompassStep, Intake, LocalResource, Source, Stage } from "@/lib/types";
 
 const STAGES: Stage[] = ["now", "soon", "later"];
 
 function sanitize(raw: Record<string, unknown>, intake: Intake): CompassPath {
   const rawSteps = Array.isArray(raw.steps) ? (raw.steps as Record<string, unknown>[]) : [];
+  const cats = ["safety", "shelter", "rent", "documents", "benefits", "food", "legal", "veteran", "health", "work"];
   const steps: CompassStep[] = rawSteps.slice(0, 9).map((s, i) => {
     const stage = STAGES.includes(s.stage as Stage) ? (s.stage as Stage) : "soon";
-    const key = typeof s.resourceKey === "string" && RESOURCE_KEYS.includes(s.resourceKey)
-      ? (s.resourceKey as string)
-      : undefined;
+    const category = typeof s.category === "string" && cats.includes(s.category) ? s.category : undefined;
     return {
       id: `s${i + 1}`,
       title: String(s.title || "Next step").slice(0, 80),
       stage,
       plain: String(s.plain || "").slice(0, 400),
-      action: String(s.action || "").slice(0, 240),
+      action: String(s.action || "").slice(0, 280),
       docs: Array.isArray(s.docs) ? (s.docs as unknown[]).map((d) => String(d)).slice(0, 5) : [],
-      resourceKey: key,
+      category,
     };
   });
   const resources = Array.isArray(raw.resources)
@@ -44,6 +51,8 @@ function sanitize(raw: Record<string, unknown>, intake: Intake): CompassPath {
     resources: Array.from(new Set(resources)),
     localResources: [],
     sources: [],
+    tags: [],
+    community: { runs: 0, top: [] },
     location: intake.location || "your area",
     createdAt: new Date().toISOString(),
   };
@@ -103,37 +112,49 @@ Reply with only the explanation, no preamble.`;
       household: String(body.household || "").slice(0, 120),
     };
 
-    const resourceList = RESOURCE_KEYS.map((k) => `"${k}" = ${RESOURCES[k].name}`).join("\n");
-    const prompt = `You are a compassionate, expert housing navigator helping someone experiencing housing insecurity. From their words, build a clear, dignified, step-by-step PATH to stable housing. Warm, plain language (6th-grade reading level). Treat them as a capable person, never a case file. Be specific and hopeful, never preachy.
+    // 1. read situation signals + what the learning model recommends
+    const tags = deriveTags(intake.situation);
+    noteRun();
+    const recommended = recommend(tags);
+    const recLabels = recommended.map((c: Category) => CATEGORY_LABEL[c]);
 
-CRITICAL SAFETY RULE: Never invent specific shelters, agencies, phone numbers, or addresses. For each step you may reference ONE resource ONLY by a key from this exact list (or none):
-${resourceList}
+    // 2. research REAL local resources first (grounded), so the path can name them
+    const local = await findLocalResources(intake);
+    const realList = local.localResources.length
+      ? local.localResources
+          .map((r) => `- ${r.name}${r.contact ? ` (${r.contact})` : ""}: ${r.helpsWith}`)
+          .join("\n")
+      : "(none found — give the next concrete action without naming an org)";
+
+    const prompt = `You are a compassionate, expert housing navigator helping someone experiencing housing insecurity. Build a clear, dignified, step-by-step PATH to stable housing. Warm, plain language (6th-grade reading level). Treat them as a capable person, never a case file. Specific and hopeful, never preachy.
 
 THEIR SITUATION: ${intake.situation}
 LOCATION: ${intake.location || "(not given)"}
 HOUSEHOLD: ${intake.household || "(not given)"}
 
-Order steps by urgency using stage: "now" (today/this week), "soon" (next couple weeks), "later" (the path to a stable home). Put safety and the local help line first; getting onto Coordinated Entry early matters most.
+REAL LOCAL RESOURCES we found for them (use ONLY these — never invent others; weave the right one, BY NAME with its contact, into the relevant step's action):
+${realList}
+
+What has helped most people in similar situations (prioritize these kinds of help early): ${recLabels.join(", ")}.
+
+Order steps by urgency: "now" (today/this week), "soon" (next couple weeks), "later" (the path to a stable home). Each step's action must be ONE concrete thing they can do — naming the specific real resource above when one fits.
 
 Return ONLY raw JSON, no markdown:
 {
-  "summary": "<warm 2-3 sentence reflection of their situation + genuine hope, speaking TO them>",
+  "summary": "<warm 2-3 sentence reflection + genuine hope, speaking TO them>",
   "steps": [
-    { "title": "<short, encouraging>", "stage": "now|soon|later", "plain": "<what & why, plain + warm, 1-2 sentences>", "action": "<one concrete next action>", "docs": ["<doc needed>"], "resourceKey": "<one key from the list or omit>" }
+    { "title": "<short, encouraging>", "stage": "now|soon|later", "plain": "<what & why, plain + warm, 1-2 sentences>", "action": "<one concrete next action, naming a real resource + contact when one fits>", "docs": ["<doc needed>"], "category": "<one of: safety, shelter, rent, documents, benefits, food, legal, veteran, health, work>" }
   ],
-  "documents": ["<vital documents to gather, plain labels>"],
-  "resources": ["<keys from the list that apply to this person>"]
+  "documents": ["<vital documents to gather, plain labels>"]
 }`;
 
-    // Build the tailored path and find real local resources in parallel.
-    const [raw, local] = await Promise.all([
-      callGemini(prompt, 2000, 0.5),
-      findLocalResources(intake),
-    ]);
+    const raw = await callGemini(prompt, 2000, 0.5);
     const parsed = extractJson(raw);
     const path = parsed ? sanitize(parsed, intake) : mockPath(intake);
     path.localResources = local.localResources;
     path.sources = local.sources;
+    path.tags = tags;
+    path.community = { runs: stats().runs, top: recLabels };
     return NextResponse.json({ path, live: IS_LIVE });
   }
 

@@ -40,8 +40,32 @@ export default function Home() {
       </nav>
 
       {/* hero */}
-      <section className="mx-auto max-w-4xl px-6 pt-20 pb-16 text-center">
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: EASE }}>
+      <section className="relative mx-auto max-w-4xl overflow-hidden px-6 pt-20 pb-16 text-center">
+        {/* the path home, drawing itself toward the star */}
+        <svg className="pointer-events-none absolute inset-0 -z-0 h-full w-full opacity-50" viewBox="0 0 400 600" preserveAspectRatio="xMidYMin slice" aria-hidden>
+          <motion.path
+            d="M200 600 C 120 480, 280 420, 200 320 S 120 180, 200 70"
+            fill="none"
+            stroke="url(#trailgrad)"
+            strokeWidth="2"
+            strokeDasharray="2 9"
+            strokeLinecap="round"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: 2.6, ease: EASE, delay: 0.3 }}
+          />
+          <defs>
+            <linearGradient id="trailgrad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#e08a72" stopOpacity="0.1" />
+              <stop offset="100%" stopColor="#e8b873" stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+          <motion.circle cx="200" cy="70" r="4" fill="#fff"
+            initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0.6] }} transition={{ delay: 2.6, duration: 1.2 }}
+            style={{ filter: "drop-shadow(0 0 8px #e8b873)" }} />
+        </svg>
+
+        <motion.div className="relative" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: EASE }}>
           <p className="mb-5 text-sm uppercase tracking-[0.3em] text-gold/80">A compass home</p>
           <h1 className="text-5xl leading-[1.05] sm:text-7xl">
             Find your way <span className="warm-text">home</span>.

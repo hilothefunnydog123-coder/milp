@@ -151,6 +151,8 @@ export function mockPath(intake: Intake): CompassPath {
     resources: Array.from(new Set(resources)),
     localResources: [],
     sources: [],
+    tags: [],
+    community: { runs: 1240, top: [] },
     location: loc,
     createdAt: new Date().toISOString(),
   };
