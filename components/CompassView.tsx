@@ -191,7 +191,7 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           <span className="font-semibold">{completed} of {total} steps {completed === total ? "— you made it" : "done"}</span>
           <span className="text-muted">{pct}%</span>
         </div>
-        <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-white/10">
+        <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-black/[0.06]">
           <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: "easeOut" }} className="h-full rounded-full trail" />
         </div>
         {!readOnly && (
@@ -267,7 +267,7 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
                 <h3 className={`mt-2 text-xl ${isDone ? "line-through" : ""}`}>{step.title}</h3>
                 <p className="mt-1.5 leading-relaxed text-muted">{step.plain}</p>
 
-                <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--line)] bg-white/[0.03] p-3 text-sm">
+                <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--line)] bg-black/[0.03] p-3 text-sm">
                   <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
                   <span><span className="font-semibold">Do this: </span>{step.action}</span>
                 </div>
