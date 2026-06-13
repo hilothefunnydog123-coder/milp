@@ -5,10 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>YNorth — Pitch</title>
 <style>
-  :root{
-    --ink:#f5efe6; --muted:#b9c2d0; --gold:#ffd27a; --star:#9fd0ff;
-    --accent:#7aa8ff; --warm:#ff9e6d;
-  }
+  :root{ --ink:#f5efe6; --muted:#b9c2d0; --gold:#ffd27a; --star:#9fd0ff; --accent:#7aa8ff; --warm:#ff9e6d; }
   *{box-sizing:border-box; margin:0; padding:0}
   html,body{height:100%}
   body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--ink); overflow:hidden; background:#05070f;}
@@ -20,61 +17,64 @@
   @keyframes tw{0%,100%{opacity:.2}50%{opacity:.9}}
 
   .deck{height:100vh; width:100vw; position:relative}
-  .slide{position:absolute; inset:0; display:none; padding:8vh 9vw; flex-direction:column; justify-content:center; animation:rise .5s ease both}
+  .slide{position:absolute; inset:0; display:none; padding:7.5vh 8.5vw; flex-direction:column; justify-content:center; animation:rise .5s ease both}
   .slide.active{display:flex}
   @keyframes rise{from{opacity:0; transform:translateY(18px)}to{opacity:1; transform:none}}
 
-  .step-no{position:absolute; top:6vh; right:9vw; font-size:clamp(3rem,9vw,7rem); font-weight:800; color:rgba(255,210,122,.12); letter-spacing:-.04em; z-index:0; line-height:1}
-  .kicker{font-size:.92rem; letter-spacing:.26em; text-transform:uppercase; color:var(--gold); margin-bottom:1.3rem; font-weight:600; position:relative; z-index:1}
+  .step-no{position:absolute; top:5.5vh; right:8.5vw; font-size:clamp(3rem,9vw,7rem); font-weight:800; color:rgba(255,210,122,.12); letter-spacing:-.04em; z-index:0; line-height:1}
+  .kicker{font-size:.9rem; letter-spacing:.26em; text-transform:uppercase; color:var(--gold); margin-bottom:1.2rem; font-weight:600; position:relative; z-index:1}
   .kicker.feat{color:var(--star)}
   h1{font-size:clamp(2.6rem,7vw,6rem); line-height:1.02; font-weight:800; letter-spacing:-.02em; position:relative; z-index:1}
-  h2{font-size:clamp(1.8rem,4.2vw,3.2rem); line-height:1.08; font-weight:800; letter-spacing:-.015em; max-width:20ch; position:relative; z-index:1}
-  .lede{font-size:clamp(1.05rem,1.9vw,1.5rem); color:var(--muted); margin-top:1.4rem; max-width:33ch; line-height:1.5; position:relative; z-index:1}
-  .big-quote{font-size:clamp(1.7rem,3.9vw,3.1rem); line-height:1.18; font-weight:700; max-width:21ch; position:relative; z-index:1}
+  h2{font-size:clamp(1.7rem,4vw,3rem); line-height:1.08; font-weight:800; letter-spacing:-.015em; max-width:21ch; position:relative; z-index:1}
+  .lede{font-size:clamp(1.02rem,1.85vw,1.45rem); color:var(--muted); margin-top:1.3rem; max-width:34ch; line-height:1.5; position:relative; z-index:1}
+  .big-quote{font-size:clamp(1.65rem,3.8vw,3rem); line-height:1.18; font-weight:700; max-width:21ch; position:relative; z-index:1}
   .big-quote .hl{color:var(--gold)}
   .star-word{color:var(--star)} .warm-word{color:var(--warm)} .gold-word{color:var(--gold)}
 
-  ul.points{margin-top:1.6rem; list-style:none; display:grid; gap:.9rem; max-width:40ch; position:relative; z-index:1}
-  ul.points li{font-size:clamp(1rem,1.8vw,1.45rem); line-height:1.35; padding-left:2rem; position:relative; color:var(--ink)}
-  ul.points li::before{content:"✦"; position:absolute; left:0; color:var(--gold); font-size:1.05em}
-  ul.points li small{display:block; color:var(--muted); font-size:.72em; margin-top:.2rem; font-weight:400}
+  ul.points{margin-top:1.4rem; list-style:none; display:grid; gap:.8rem; max-width:42ch; position:relative; z-index:1}
+  ul.points li{font-size:clamp(.98rem,1.7vw,1.4rem); line-height:1.32; padding-left:1.9rem; position:relative; color:var(--ink)}
+  ul.points li::before{content:"✦"; position:absolute; left:0; color:var(--gold); font-size:1.02em}
+  ul.points li small{display:block; color:var(--muted); font-size:.72em; margin-top:.18rem; font-weight:400}
 
-  .path{display:grid; gap:.85rem; margin-top:1.6rem; max-width:48ch; position:relative; z-index:1}
-  .step{display:flex; gap:1rem; align-items:baseline; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:.85rem 1.2rem}
-  .step .tag{font-size:.74rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); min-width:4.5ch; font-weight:700}
-  .step .txt{font-size:clamp(.96rem,1.6vw,1.22rem)}
+  .path{display:grid; gap:.8rem; margin-top:1.5rem; max-width:48ch; position:relative; z-index:1}
+  .step{display:flex; gap:1rem; align-items:baseline; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:.8rem 1.15rem}
+  .step .tag{font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); min-width:4.5ch; font-weight:700}
+  .step .txt{font-size:clamp(.94rem,1.55vw,1.2rem)}
 
-  .chips{display:flex; flex-wrap:wrap; gap:.7rem; margin-top:1.6rem; max-width:44ch; position:relative; z-index:1}
-  .chip{font-size:clamp(.82rem,1.4vw,1.02rem); padding:.5rem .9rem; border-radius:999px; background:rgba(122,168,255,.10); border:1px solid rgba(122,168,255,.32); color:var(--ink)}
+  /* feature rail (two-column check list) */
+  .featrail{margin-top:1.3rem; display:grid; grid-template-columns:1fr 1fr; gap:.55rem 1.8rem; max-width:56ch; position:relative; z-index:1}
+  .featrail div{font-size:clamp(.86rem,1.4vw,1.08rem); color:var(--ink); padding-left:1.5rem; position:relative; line-height:1.3}
+  .featrail div::before{content:"✓"; position:absolute; left:0; color:var(--star); font-weight:700}
+
+  .chips{display:flex; flex-wrap:wrap; gap:.65rem; margin-top:1.4rem; max-width:46ch; position:relative; z-index:1}
+  .chip{font-size:clamp(.8rem,1.35vw,1rem); padding:.48rem .85rem; border-radius:999px; background:rgba(122,168,255,.10); border:1px solid rgba(122,168,255,.32); color:var(--ink)}
   .chip b{color:var(--star); font-weight:700}
+  .syschips{display:flex; flex-wrap:wrap; gap:.42rem; margin-top:1.1rem; max-width:50ch; position:relative; z-index:1}
+  .syschips span{font-size:clamp(.7rem,1.1vw,.88rem); padding:.3rem .65rem; border-radius:999px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); color:var(--muted)}
 
-  .trackfit{margin-top:1.6rem; max-width:47ch; padding:1.05rem 1.3rem; border-radius:14px; background:rgba(255,210,122,.07); border:1px solid rgba(255,210,122,.3); position:relative; z-index:1}
-  .trackfit h4{color:var(--gold); letter-spacing:.16em; text-transform:uppercase; font-size:.7rem; margin-bottom:.5rem}
-  .trackfit .row{display:flex; gap:.6rem; font-size:clamp(.9rem,1.5vw,1.12rem); margin:.28rem 0; line-height:1.35}
+  .trackfit{margin-top:1.4rem; max-width:48ch; padding:1rem 1.25rem; border-radius:14px; background:rgba(255,210,122,.07); border:1px solid rgba(255,210,122,.3); position:relative; z-index:1}
+  .trackfit h4{color:var(--gold); letter-spacing:.16em; text-transform:uppercase; font-size:.68rem; margin-bottom:.5rem}
+  .trackfit .row{display:flex; gap:.6rem; font-size:clamp(.88rem,1.45vw,1.1rem); margin:.26rem 0; line-height:1.32}
   .trackfit .row b{color:var(--ink); min-width:9.5ch; font-weight:700}
   .trackfit .row span{color:var(--muted)}
 
-  /* "why it stands out" pill for feature slides */
-  .standout{margin-top:1.5rem; max-width:46ch; font-size:clamp(.92rem,1.5vw,1.15rem); line-height:1.45; color:var(--muted); border-left:3px solid var(--star); padding:.4rem 0 .4rem 1rem; position:relative; z-index:1}
+  .standout{margin-top:1.4rem; max-width:46ch; font-size:clamp(.9rem,1.45vw,1.12rem); line-height:1.45; color:var(--muted); border-left:3px solid var(--star); padding:.4rem 0 .4rem 1rem; position:relative; z-index:1}
   .standout b{color:var(--star)}
 
-  /* call-script mockup card */
-  .scriptcard{margin-top:1.5rem; max-width:42ch; background:rgba(255,255,255,.05); border:1px solid rgba(255,210,122,.32); border-radius:16px; padding:1.2rem 1.4rem; line-height:1.5; position:relative; z-index:1; font-size:clamp(.98rem,1.6vw,1.25rem)}
-  .scriptcard .lbl{font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-bottom:.7rem}
-  .scriptcard p{margin:.35rem 0; color:var(--muted)}
+  .scriptcard{margin-top:1.4rem; max-width:42ch; background:rgba(255,255,255,.05); border:1px solid rgba(255,210,122,.32); border-radius:16px; padding:1.1rem 1.35rem; line-height:1.5; position:relative; z-index:1; font-size:clamp(.96rem,1.55vw,1.22rem)}
+  .scriptcard .lbl{font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin-bottom:.6rem}
+  .scriptcard p{margin:.32rem 0; color:var(--muted)}
   .scriptcard p .hl{color:var(--ink)}
 
-  /* neural-network diagram */
-  .netdiag{display:grid; grid-template-columns:1fr auto 1fr; gap:1.4rem; align-items:center; margin-top:1.5rem; max-width:52ch; position:relative; z-index:1}
-  .netcol{display:grid; gap:.5rem}
-  .netcol .h{font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:.2rem}
-  .node{font-size:clamp(.78rem,1.3vw,.98rem); padding:.4rem .7rem; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1)}
+  .netdiag{display:grid; grid-template-columns:1fr auto 1fr; gap:1.3rem; align-items:center; margin-top:1.3rem; max-width:54ch; position:relative; z-index:1}
+  .netcol{display:grid; gap:.45rem}
+  .netcol .h{font-size:.64rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:.18rem}
+  .node{font-size:clamp(.76rem,1.25vw,.96rem); padding:.38rem .65rem; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1)}
   .node.hot{border-color:rgba(255,210,122,.55); color:var(--gold); background:rgba(255,210,122,.08)}
-  .brainnode{width:96px; height:96px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-align:center;
-    background:radial-gradient(circle, rgba(255,210,122,.32), rgba(122,168,255,.16) 70%); border:1px solid rgba(255,210,122,.55);
-    font-weight:700; color:var(--gold); font-size:.72rem; line-height:1.2}
+  .brainnode{width:94px; height:94px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-align:center;
+    background:radial-gradient(circle, rgba(255,210,122,.32), rgba(122,168,255,.16) 70%); border:1px solid rgba(255,210,122,.55); font-weight:700; color:var(--gold); font-size:.7rem; line-height:1.2}
 
-  .ask{margin-top:1.6rem; font-size:clamp(1.15rem,2.3vw,1.9rem); font-weight:700; position:relative; z-index:1}
+  .ask{margin-top:1.4rem; font-size:clamp(1.1rem,2.2vw,1.85rem); font-weight:700; position:relative; z-index:1}
   .ask .accent{color:var(--warm)}
 
   .chrome{position:fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; font-size:.8rem; color:var(--muted); z-index:5}
@@ -103,19 +103,19 @@
     </section>
 
     <!-- 2 — CHALLENGE -->
-    <section class="slide" data-time="0:00–0:45" data-notes="Picture losing your home tomorrow — not your money, your HOME. Help exists: vouchers, shelters, benefits, legal aid. Pause before the punchline. Then the maze: a dozen waitlists, a form needing the ID you lost, Coordinated Entry nobody explained, offices that don't talk. The Housing Dignity track asks us to restore dignity to people in exactly this maze.">
+    <section class="slide" data-time="0:00–0:40" data-notes="Picture losing your home tomorrow — not your money, your HOME. The help exists: vouchers, shelters, benefits, legal aid. Pause before the punchline. Then the maze: a dozen waitlists, a form needing the ID you lost, Coordinated Entry nobody explained, offices that don't talk. The Housing Dignity track asks us to restore dignity to people in exactly this maze — that's the thread through everything we built.">
       <div class="step-no">01</div>
       <div class="kicker">The Challenge</div>
       <p class="big-quote">People don't stay homeless because help doesn't exist — they stay homeless because the <span class="hl">path to it is hidden.</span></p>
       <ul class="points">
         <li>A dozen separate waitlists &amp; forms</li>
         <li>A Coordinated Entry system nobody explained</li>
-        <li>Offices that don't talk to each other</li>
+        <li>Offices that don't talk to each other — and a phone call you're terrified to make</li>
       </ul>
     </section>
 
     <!-- 3 — IDEA -->
-    <section class="slide" data-time="0:45–1:10" data-notes="This is YNorth — a north star out of that maze. You tell it where you are, in your own words. It hands you something nobody ever has: YOUR path. Now / Soon / Home — ordered, plain-language, one step at a time.">
+    <section class="slide" data-time="0:40–1:05" data-notes="This is YNorth — a north star out of that maze. You tell it where you are, in your own words. It hands you something nobody ever has: YOUR path. Now / Soon / Home — ordered, plain-language, one step at a time, with the document you need and a real resource that works.">
       <div class="step-no">02</div>
       <div class="kicker">The Idea</div>
       <h2>A north star out of the maze.</h2>
@@ -126,27 +126,40 @@
       </div>
     </section>
 
-    <!-- 4 — IDEA / LIVE DEMO -->
-    <section class="slide" data-time="1:10–2:40" data-notes="DEMO (~1:30, the core). 1) Voice / quick-tap intake of a real situation, any language. 2) The personalized path appears — Now / Soon / Home. 3) Tap 'explain this simply' on a step. 4) Show the share link to a caseworker. Pre-load a clean scenario; screen recording ready as backup; the no-key fallback works offline.">
+    <!-- 4 — IDEA / LIVE DEMO + FEATURE RAIL -->
+    <section class="slide" data-time="1:05–2:35" data-notes="DEMO (~1:30, the core). Walk the feature rail live: 1) Speak or type your situation, any language; quick-tap chips when words are hard. 2) The personalized path appears — Now/Soon/Home. 3) Tap 'explain this simply' on a step. 4) Check off a document. 5) Mark a step done — show progress. 6) Tap 'this helped' (mention it teaches the model). 7) Generate the 'share with a helper' link. Pre-load a clean scenario; recording ready as backup; no-key fallback works offline.">
       <div class="step-no">02</div>
       <div class="kicker">The Idea · Live</div>
       <h2>Tell it where you are. Get your path.</h2>
-      <p class="lede">Voice intake → personalized path → “explain this simply” → share with a caseworker. <span class="gold-word">Multilingual, low-literacy friendly, calm by design.</span></p>
+      <div class="featrail">
+        <div>Speak it or type it — <b>any language</b></div>
+        <div>Quick-tap prompts when words are hard</div>
+        <div>Your path: <b>Now · Soon · Home</b></div>
+        <div>“Explain this simply” on any step</div>
+        <div>A documents checklist that opens doors</div>
+        <div>Progress you can see and own</div>
+        <div>“This helped” teaches the model</div>
+        <div>Share your path with a caseworker</div>
+      </div>
     </section>
 
-    <!-- 5 — IDEA / DIGNITY -->
-    <section class="slide" data-time="2:40–3:00" data-notes="Slow down — the dignity core. Every chatbot will confidently invent a shelter that doesn't exist and a number that rings nowhere — catastrophic in a crisis. YNorth CANNOT. And the story never touches our servers. Dignity isn't a feature; it's the whole point.">
+    <!-- 5 — IDEA / TRUTH & DIGNITY -->
+    <section class="slide" data-time="2:35–3:00" data-notes="The dignity core of the track — slow down. Every chatbot will confidently invent a shelter that doesn't exist and a number that rings nowhere — catastrophic in a crisis. YNorth can't: it only cites real, universal systems, AND it researches real local orgs live and shows the receipts. And your story never touches our servers — it lives on your device. Dignity isn't a feature; it's the whole point, and it works for ANY location in the world.">
       <div class="step-no">02</div>
-      <div class="kicker">The Idea · Dignity by design</div>
-      <h2>It <span class="warm-word">cannot lie</span> to you.</h2>
+      <div class="kicker">The Idea · Truth &amp; dignity</div>
+      <h2>It <span class="warm-word">cannot lie</span> — and it never keeps your story.</h2>
       <ul class="points">
-        <li>Never invents a shelter or hotline<small>Only real, universal U.S. systems — 211, HUD, Vital Records, SSA, 988</small></li>
-        <li>Your story lives on your device<small>Nothing on a server. We can't leak what we never hold.</small></li>
+        <li>Only real, universal systems — never an invented shelter</li>
+        <li>Real local orgs, researched live and <b>cited</b> — anywhere in the world</li>
+        <li>Your story lives on your device — nothing on a server</li>
       </ul>
+      <div class="syschips">
+        <span>211</span><span>Coordinated Entry</span><span>HUD vouchers</span><span>SNAP</span><span>Medicaid</span><span>Vital Records</span><span>SSA</span><span>State ID</span><span>Legal Aid</span><span>VA</span><span>DV hotline</span><span>988</span>
+      </div>
     </section>
 
-    <!-- 6 — FEATURE SPOTLIGHT: THE CALL (AI voice agent) -->
-    <section class="slide" data-time="3:00–3:30" data-notes="STANDOUT FEATURE #1. The hardest step isn't finding the number — it's making the call. People freeze: anxiety, shame, hold times, a language barrier, not knowing what to say. So YNorth makes the call FOR you — an AI voice agent dials a real, verified line (211, a housing office), navigates the phone tree, waits on hold, asks your questions in a calm voice, and hands you back the answer and the next step. It only ever calls real numbers, never an invented one. DEMO NOTE: live telephony is risky on stage — play a short recording of a real call as the primary demo, with a live attempt only if the venue wifi/line is solid.">
+    <!-- 6 — FEATURE SPOTLIGHT: THE CALL -->
+    <section class="slide" data-time="3:00–3:25" data-notes="STANDOUT FEATURE #1. The hardest step isn't finding the number — it's making the call. People freeze: anxiety, shame, hold times, a language barrier. So YNorth makes the call FOR you — an AI voice agent dials a real, verified line, navigates the phone tree, waits on hold, asks your questions in a calm voice, and hands back the answer and next step. It only ever calls real numbers. DEMO NOTE: live telephony is risky — play a short recording of a real call as the primary demo.">
       <div class="kicker feat">✦ Feature Spotlight · The Call</div>
       <h2>Can't face the call? YNorth makes it <span class="warm-word">for you.</span></h2>
       <div class="scriptcard">
@@ -155,41 +168,12 @@
         <p>Asking on your behalf: <span class="hl">open family-shelter beds + your Coordinated Entry access point</span></p>
         <p><span class="hl">✓ Done.</span> “Here's what they said — and your next step.”</p>
       </div>
-      <div class="standout"><b>Why it stands out:</b> removes the call entirely — no hold time, no language barrier, no shame. The agent only ever calls <b>real, verified lines.</b> An ambitious AI voice agent in service of pure <b>dignity + real-world impact.</b></div>
+      <div class="standout"><b>Why it stands out:</b> removes the call entirely — no hold time, no language barrier, no shame. Only ever calls <b>real, verified lines.</b> Pure <b>dignity + real-world impact.</b></div>
     </section>
 
-    <!-- 7 — PROCESS -->
-    <section class="slide" data-time="3:25–3:50" data-notes="How we built it in a day. Next.js + TypeScript + Tailwind for a warm, accessible UI. Gemini 2.5 Flash generates the path and plain-language explanations. Web Speech API for voice. The technical depth is the safety layer constraining the AI to ONLY real resources, plus the on-device learning model. No-key fallback so the demo never dies.">
-      <div class="step-no">03</div>
-      <div class="kicker">The Process</div>
-      <h2>How we built it — in a day.</h2>
-      <div class="chips">
-        <div class="chip"><b>Next.js</b> + TypeScript + Tailwind</div>
-        <div class="chip"><b>Gemini 2.5 Flash</b> — path + plain language</div>
-        <div class="chip"><b>AI voice agent</b> — calls real lines for you</div>
-        <div class="chip"><b>Real-resource safety layer</b> — no hallucinated help</div>
-        <div class="chip"><b>On-device learning model</b></div>
-        <div class="chip"><b>No-key fallback</b> — demo never dies</div>
-      </div>
-    </section>
-
-    <!-- 8 — IMPACT -->
-    <section class="slide" data-time="3:50–4:15" data-notes="The real-world impact judges care about. We remove the #1 barrier — knowing the ordered next step and the doc you need. Accessible to those who need it most. Then point at the track-fit box so judges can literally check the boxes: creativity, technical complexity, real-world impact.">
-      <div class="step-no">04</div>
-      <div class="kicker">The Impact</div>
-      <h2>We remove the barrier that keeps people stuck.</h2>
-      <div class="trackfit">
-        <h4>Housing Dignity track fit</h4>
-        <div class="row"><b>Real impact</b><span>Turns the navigation maze into one clear, ordered path — for the people who need it most.</span></div>
-        <div class="row"><b>Tech depth</b><span>AI hard-constrained to real resources + an on-device model that learns.</span></div>
-        <div class="row"><b>Creativity</b><span>Not a chatbot — a living compass you own, an AI that makes the call for you, and a brain that learns.</span></div>
-      </div>
-    </section>
-
-    <!-- 9 — RECOGNITION & GROWTH: THE NETWORK (neural network) -->
-    <section class="slide" data-time="4:15–4:40" data-notes="STANDOUT FEATURE #2 + the growth story. This is NOT an LLM wrapper. It's a real on-device neural network — a single-layer online-learning model. Each person's situation maps to the categories of help that work; every 'this helped' is one gradient step that nudges the weights; proven resources rise for the next person. It persists across all users — a genuine network effect. A hackathon demo that becomes collective intelligence for getting housed. THIS is your technical-complexity + creativity flex — make judges feel it compound.">
-      <div class="step-no">05</div>
-      <div class="kicker feat">✦ Recognition &amp; Growth · The Network</div>
+    <!-- 7 — FEATURE SPOTLIGHT: THE NETWORK (neural network) -->
+    <section class="slide" data-time="3:25–3:50" data-notes="STANDOUT FEATURE #2. This is NOT an LLM wrapper — it's a real on-device neural network, a single-layer online-learning model. A person's situation maps to the categories of help that work; every 'this helped' is one gradient step that nudges the weights; proven resources rise for the next person. It persists across all users — a genuine network effect. This is the technical-complexity + creativity flex: a hackathon demo that becomes collective intelligence for getting housed.">
+      <div class="kicker feat">✦ Feature Spotlight · The Network</div>
       <h2>A neural network that learns what gets people housed.</h2>
       <div class="netdiag">
         <div class="netcol">
@@ -206,25 +190,67 @@
           <div class="node">family shelter</div>
         </div>
       </div>
-      <div class="standout"><b>Why it stands out:</b> every “this helped” is one gradient step — proven resources rise for the next person. It learns across all users: <b>collective intelligence for getting home.</b></div>
+      <div class="standout"><b>Why it stands out:</b> every “this helped” is one gradient step — and it learns across all users. <b>Collective intelligence for getting home.</b></div>
     </section>
 
-    <!-- 10 — WHAT'S NEXT -->
-    <section class="slide" data-time="4:40–4:55" data-notes="From hackathon demo to civic infrastructure. Pilot with a 211 / city housing dept / library. Expand verified-resource coverage city by city. More languages + offline kiosk mode for shelters. A caseworker dashboard. State the ask clearly.">
+    <!-- 8 — PROCESS -->
+    <section class="slide" data-time="3:50–4:10" data-notes="How we built it in a day. Next.js + TS + Tailwind + Framer Motion for a warm, accessible, cinematic UI. Gemini 2.5 Flash builds the path and explains plainly; grounded search finds real local orgs and cites them. Web Speech API for voice. A Python AI voice agent places the calls. The on-device learning model persists globally via Supabase. A real-resource safety layer means no hallucinated help — and a no-key fallback means the demo never dies.">
+      <div class="step-no">03</div>
+      <div class="kicker">The Process</div>
+      <h2>How we built it — in a day.</h2>
+      <div class="chips">
+        <div class="chip"><b>Next.js</b> + TS + Tailwind + Framer Motion</div>
+        <div class="chip"><b>Gemini 2.5 Flash</b> — path + plain language</div>
+        <div class="chip"><b>Grounded search</b> — real local orgs, cited</div>
+        <div class="chip"><b>Web Speech API</b> — voice intake</div>
+        <div class="chip"><b>Python AI voice agent</b> — calls for you</div>
+        <div class="chip"><b>On-device model</b> + Supabase global brain</div>
+        <div class="chip"><b>Real-resource safety layer</b></div>
+        <div class="chip"><b>No-key fallback</b> — demo never dies</div>
+      </div>
+    </section>
+
+    <!-- 9 — IMPACT -->
+    <section class="slide" data-time="4:10–4:30" data-notes="The real-world impact judges care about. We remove the #1 barrier — knowing the ordered next step and the doc you need — for the people who need it most: voice, any language, low-literacy, works anywhere in the world. Then point at the track-fit box so judges can literally check the boxes: creativity, technical complexity, real-world impact.">
+      <div class="step-no">04</div>
+      <div class="kicker">The Impact</div>
+      <h2>We remove the barrier that keeps people stuck.</h2>
+      <div class="trackfit">
+        <h4>Housing Dignity track fit</h4>
+        <div class="row"><b>Real impact</b><span>Turns the navigation maze into one clear path — voice, any language, anywhere in the world.</span></div>
+        <div class="row"><b>Tech depth</b><span>Grounded real-resource AI + an AI voice agent + an on-device neural network.</span></div>
+        <div class="row"><b>Creativity</b><span>Not a chatbot — a compass you own that calls for you and learns for the next person.</span></div>
+      </div>
+    </section>
+
+    <!-- 10 — RECOGNITION & GROWTH -->
+    <section class="slide" data-time="4:30–4:45" data-notes="What we're proud of, and how it grows. In one hack we shipped a multilingual, voice-first, privacy-first product that works anywhere in the world — and a neural network that compounds. Every 'this helped' lifts the next person's path. The more people YNorth helps, the better it helps the next — collective intelligence for getting housed.">
+      <div class="step-no">05</div>
+      <div class="kicker">Recognition &amp; Growth</div>
+      <h2>A working product that gets smarter every day.</h2>
+      <ul class="points">
+        <li>Shipped in a day: multilingual, voice-first, privacy-first — works worldwide</li>
+        <li>The network compounds: every “this helped” lifts the next person's path</li>
+        <li><span class="star-word">Collective intelligence for getting home.</span></li>
+      </ul>
+    </section>
+
+    <!-- 11 — WHAT'S NEXT -->
+    <section class="slide" data-time="4:45–4:55" data-notes="From hackathon demo to civic infrastructure. Pilot with a 211 / city housing dept / library. Expand verified-resource coverage city by city. Scale the voice agent. A caseworker dashboard + offline kiosk mode for shelters. State the ask clearly.">
       <div class="step-no">06</div>
       <div class="kicker">What's Next</div>
       <h2>From demo to civic infrastructure.</h2>
       <ul class="points">
         <li>Pilot with a 211, city housing dept, or library</li>
         <li>Verified-resource coverage, city by city</li>
-        <li>More languages + offline kiosk mode for shelters</li>
-        <li>A caseworker dashboard</li>
+        <li>Scale the voice agent + a caseworker dashboard</li>
+        <li>Offline kiosk mode for shelters</li>
       </ul>
       <p class="ask">Our ask: <span class="accent">one pilot partner to put YNorth in real hands.</span></p>
     </section>
 
-    <!-- 11 — CLOSE -->
-    <section class="slide" data-time="4:55–5:00" data-notes="Full circle. Land it and stop. No one stays lost in the maze just because they couldn't find the door. YNorth points home. Then breathe — take a question if offered.">
+    <!-- 12 — CLOSE -->
+    <section class="slide" data-time="4:55–5:00" data-notes="Full circle to the central theme — dignity. Land it and stop. No one stays lost in the maze just because they couldn't find the door. YNorth points home. Then breathe — take a question if offered.">
       <div class="kicker">The vision</div>
       <p class="big-quote">No one stays lost in the maze just because they couldn't find the door.</p>
       <h1 style="margin-top:1.4rem; font-size:clamp(2.2rem,6vw,4.5rem)">YNorth points <span class="star-word">home</span>.</h1>
@@ -236,7 +262,7 @@
 
   <div class="chrome">
     <div class="brand"><span class="n">✦</span> YNorth</div>
-    <div class="count"><span id="cur">1</span> / <span id="total">11</span></div>
+    <div class="count"><span id="cur">1</span> / <span id="total">12</span></div>
   </div>
   <div class="hint">← → or Space to navigate · <b>N</b> speaker notes · <b>F</b> fullscreen</div>
 
@@ -247,7 +273,6 @@
     s.style.animationDelay=(Math.random()*4)+'s';s.style.opacity=(.2+Math.random()*.6);
     if(Math.random()>.85){s.style.width='3px';s.style.height='3px';s.style.background='#ffd27a'}
     sf.appendChild(s);}
-
   const slides=[...document.querySelectorAll('.slide')];
   let i=0;
   const cur=document.getElementById('cur'), total=document.getElementById('total');
