@@ -86,6 +86,7 @@ export default function Start() {
       if (data.path) {
         localStorage.setItem("yn_path", JSON.stringify(data.path));
         localStorage.setItem("yn_lang", language);
+        localStorage.setItem("yn_situation", situation);
         localStorage.setItem("yn_progress", JSON.stringify({}));
         router.push("/path");
       }
