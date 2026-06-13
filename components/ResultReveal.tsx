@@ -24,10 +24,14 @@ export default function ResultReveal({
   result,
   fieldId,
   fieldName,
+  modelId,
+  org = null,
 }: {
   result: AssessResult;
   fieldId: string;
   fieldName: string;
+  modelId?: string;
+  org?: string | null;
 }) {
   const [name, setName] = useState("");
   const [cred, setCred] = useState<Credential | null>(null);
@@ -47,6 +51,8 @@ export default function ResultReveal({
           grade: result.grade,
           dimensions: result.dimensions,
           verdict: result.verdict,
+          modelId,
+          org,
         }),
       });
       const data = await res.json();

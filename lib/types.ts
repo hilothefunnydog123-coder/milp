@@ -76,4 +76,17 @@ export interface Credential {
   dimensions: AssessDimensions;
   verdict: string;
   issuedAt: string; // ISO
+  modelId?: string; // which model skin they used
+  org?: string | null; // employer org if taken via a shared test
+}
+
+/** A test an employer creates and shares via URL. */
+export interface CustomTest {
+  id: string; // share id, e.g. t_AB12CD
+  title: string;
+  fieldId: string;
+  fieldName: string;
+  org: string; // employer / org name
+  lockedModel: string | null; // a model id, or null = candidate chooses
+  createdAt: string;
 }

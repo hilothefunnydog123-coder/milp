@@ -1,10 +1,29 @@
-import type { Credential } from "./types";
+import type { Credential, CustomTest } from "./types";
 
 // ---- credential id ----
 export function newCredentialId(): string {
   const block = () =>
     Math.random().toString(36).slice(2, 6).toUpperCase().replace(/[^A-Z0-9]/g, "0");
   return `JM-${block()}-${block().slice(0, 3)}`;
+}
+
+export function newTestId(): string {
+  return "t_" + Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+// ---- custom employer tests (in-memory; swap for Supabase later) ----
+const tests = new Map<string, CustomTest>();
+
+export function createTest(t: CustomTest): void {
+  tests.set(t.id, t);
+}
+export function getTest(id: string): CustomTest | undefined {
+  return tests.get(id);
+}
+export function listTestsByOrg(org: string): CustomTest[] {
+  return [...tests.values()]
+    .filter((t) => t.org === org)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 // ---- seeded demo board (always full, even before anyone takes the test) ----

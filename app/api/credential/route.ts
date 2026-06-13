@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
     },
     verdict: String(body.verdict || "Assessed").slice(0, 60),
     issuedAt: new Date().toISOString(),
+    modelId: body.modelId ? String(body.modelId) : undefined,
+    org: body.org ? String(body.org).slice(0, 60) : null,
   };
 
   addCredential(cred);
