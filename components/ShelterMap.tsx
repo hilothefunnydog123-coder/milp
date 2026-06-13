@@ -74,7 +74,11 @@ export default function ShelterMap({ location, resources = [] }: { location: str
     }
 
     (async () => {
-      const c = await geo(location);
+      // prefer the exact coordinates of the place the user picked
+      const stored = (() => {
+        try { const s = JSON.parse(localStorage.getItem("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
+      })();
+      const c = stored || (await geo(location));
       if (cancelled) return;
       setCenter(c ? { lat: c.lat, lng: c.lng } : null);
       const ps: Pin[] = [];
