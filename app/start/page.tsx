@@ -27,6 +27,14 @@ export default function Start() {
   const [loading, setLoading] = useState(false);
   const [advocate, setAdvocate] = useState(false);
   const recRef = useRef<{ stop: () => void } | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    setTick(0);
+    const t = setInterval(() => setTick((n) => n + 1), 3200);
+    return () => clearInterval(t);
+  }, [loading]);
 
   useEffect(() => {
     setAdvocate(new URLSearchParams(window.location.search).get("for") === "advocate");
@@ -85,14 +93,35 @@ export default function Start() {
   }
 
   if (loading) {
+    const where = location.trim() || "you";
+    const steps = [
+      "Reading what you shared…",
+      `Searching for real help near ${where}…`,
+      "Finding shelters, rent help, and food…",
+      "Checking how to replace lost documents…",
+      "Building your step-by-step path…",
+    ];
+    const msg = steps[Math.min(tick, steps.length - 1)];
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-6 text-center">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }}>
           <Compass className="h-10 w-10 text-gold" />
         </motion.div>
-        <p className="text-xl">Charting your path home…</p>
+        <p className="font-display text-2xl">Looking up real help near you</p>
+        <motion.p key={msg} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="h-5 text-muted">
+          {msg}
+        </motion.p>
+        <div className="h-2 w-72 max-w-[80vw] overflow-hidden rounded-full bg-white/10">
+          <motion.div
+            initial={{ width: "0%" }}
+            animate={{ width: "94%" }}
+            transition={{ duration: 22, ease: "easeOut" }}
+            className="h-full rounded-full trail"
+          />
+        </div>
         <p className="max-w-sm text-sm text-muted">
-          Finding the clearest next steps for your situation. One moment.
+          This usually takes about <span className="text-ink">15–20 seconds</span> — we&apos;re
+          searching live for real, local resources, not generic advice. Hang tight, it&apos;s worth it.
         </p>
       </main>
     );

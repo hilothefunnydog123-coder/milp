@@ -54,15 +54,15 @@ async function findLocalResources(
   intake: Intake
 ): Promise<{ localResources: LocalResource[]; sources: Source[] }> {
   if (!intake.location.trim()) return { localResources: [], sources: [] };
-  const prompt = `Find 3 to 5 REAL, currently-operating organizations or programs in or near "${intake.location}" that can directly help a person in this situation: "${intake.situation}".
+  const prompt = `Find 4 to 6 REAL, currently-operating organizations or programs in or near "${intake.location}" that can directly help a person in this situation: "${intake.situation}".
 
-Prioritize: emergency shelter, the local Continuum of Care / Coordinated Entry, the area's Public Housing Authority, rental assistance, food, and any service matching their specific needs.
+This must work for ANY location in the world — use that area's real local nonprofits, government services, and the country/region's equivalent systems (shelter intake, housing/benefits agencies, food, legal aid, crisis lines). Prioritize the most useful, currently-operating options for THIS person's specific needs.
 
-Only include organizations you can actually find. For each, give a short helpsWith and a real contact (phone or website) when available.
+Only include organizations you can actually find right now. For each give a short helpsWith (include eligibility or hours if known) and a real contact (phone or website) when available.
 
 Return ONLY a JSON array, no prose:
 [{ "name": "...", "helpsWith": "...", "contact": "..." }]
-If you cannot find real local ones, return [].`;
+If you genuinely cannot find real local ones, return [].`;
 
   const { text, sources } = await callGeminiGrounded(prompt, 0.2);
   const arr = extractJsonArray(text);
