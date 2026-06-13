@@ -110,3 +110,47 @@ export function recommend(tags: string[]): Category[] {
 export function stats() {
   return { runs, helpfulMarks };
 }
+
+// ---- optional Supabase persistence: makes the model learn across ALL users + deploys ----
+function client() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+let loaded = false;
+
+/** Load the global brain state once per server instance. */
+export async function loadBrain(): Promise<void> {
+  if (loaded) return;
+  loaded = true;
+  const c = client();
+  if (!c) return;
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const sb = createClient(c.url, c.key);
+    const { data } = await sb.from("brain_state").select("data").eq("id", "global").single();
+    const d = data?.data as { weights?: Weights; runs?: number; helpfulMarks?: number } | undefined;
+    if (d) {
+      Object.assign(weights, d.weights || {});
+      if (typeof d.runs === "number") runs = d.runs;
+      if (typeof d.helpfulMarks === "number") helpfulMarks = d.helpfulMarks;
+    }
+  } catch {
+    /* fall back to in-memory */
+  }
+}
+
+/** Persist the global brain state (fire-and-forget). */
+export async function saveBrain(): Promise<void> {
+  const c = client();
+  if (!c) return;
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const sb = createClient(c.url, c.key);
+    await sb.from("brain_state").upsert({ id: "global", data: { weights, runs, helpfulMarks } });
+  } catch {
+    /* ignore — demo must not break on DB hiccup */
+  }
+}
