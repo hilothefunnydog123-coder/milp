@@ -16,7 +16,33 @@ Built for the **Housing Dignity** track at Milpitas Hacks.
 
 ---
 
-## 🎤 The 2-minute spoken pitch
+## ⏱️ 5-Minute Run of Show
+
+Total stage time: **5:00**. Plan to land at **~4:30** and leave ~30s of air for nerves /
+applause / a judge question. One person narrates, one person drives the demo (or rehearse
+the solo handoff).
+
+| Time | Segment | What happens |
+|------|---------|--------------|
+| **0:00–0:40** | **Hook + the maze** | "Picture losing your home tomorrow." Land the insight: help exists — the *path* to it is hidden. |
+| **0:40–1:10** | **Intro YNorth** | "A north star out of that maze." One sentence on what it does. |
+| **1:10–3:20** | **LIVE DEMO (the core)** | Voice intake → personalized path (Now / Soon / Home) → "explain this simply" on a step → share link to a caseworker. ~2 min, rehearsed. |
+| **3:20–4:00** | **The differentiator** | "It cannot lie to you" (real-resources-only) + on-device privacy + the learning brain that compounds. |
+| **4:00–4:30** | **Who deploys it + ask** | 211s, cities, libraries, shelters distribute it free to the person. State the ask. |
+| **4:30–4:45** | **Close** | Full circle: "No one stays lost in the maze just because they couldn't find the door. **YNorth points home.**" |
+| **4:45–5:00** | **Buffer** | Breathe. Take one judge question if offered. |
+
+**Demo safety:** rehearse the demo 3+ times, pre-load a clean example, and have a screen
+recording ready in case wifi/voice fails — the app's no-key fallback path also works
+offline. Never type a long story live; use a quick-tap chip or a pre-set scenario.
+
+> If your 5 minutes is **pitch + separate Q&A**, compress the demo to ~90s (3:20 → 2:40
+> total) and bank the rest for questions — the tough-question prep below covers the
+> likely ones.
+
+---
+
+## 🎤 The full spoken pitch (narration for the run of show above)
 
 **[Open quiet. One beat.]**
 
