@@ -108,8 +108,7 @@ Reply with only the instructions.`;
     const r = await fetch("https://api.vapi.ai/call", {
       method: "POST",
       headers: { Authorization: `Bearer ${VAPI_API_KEY}`, "Content-Type": "application/json" },
-      // monitorPlan.controlEnabled returns a controlUrl we can POST to to hang up.
-      body: JSON.stringify({ phoneNumberId: VAPI_PHONE_NUMBER_ID, customer: { number }, assistant, monitorPlan: { controlEnabled: true } }),
+      body: JSON.stringify({ phoneNumberId: VAPI_PHONE_NUMBER_ID, customer: { number }, assistant }),
     });
     if (r.status >= 300) {
       const t = await r.text();
