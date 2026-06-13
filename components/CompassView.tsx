@@ -23,6 +23,7 @@ import AnimatedNumber from "./AnimatedNumber";
 import CallForMe from "./CallForMe";
 import Guardian from "./Guardian";
 import Companion from "./Companion";
+import ShelterMap from "./ShelterMap";
 import type { CompassPath } from "@/lib/types";
 
 const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
@@ -338,6 +339,9 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           )}
         </div>
       )}
+
+      {/* shelter map — Jarvis-style HUD, accessible, real OSM data */}
+      {!readOnly && <ShelterMap location={path.location} resources={path.localResources} />}
 
       {/* transparency: what AI is doing the work */}
       <div className="mt-10 rounded-2xl border border-[var(--line)] p-5">
