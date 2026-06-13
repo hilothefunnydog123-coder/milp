@@ -39,20 +39,54 @@ export default function ShelterMap({ location, resources = [] }: { location: str
       return null;
     }
 
+    // Pull MANY real shelters / social-service POIs near a point from OpenStreetMap.
+    async function overpass(lat: number, lng: number): Promise<Pin[]> {
+      const q = `[out:json][timeout:25];(` +
+        `node["social_facility"](around:25000,${lat},${lng});` +
+        `way["social_facility"](around:25000,${lat},${lng});` +
+        `node["amenity"="shelter"](around:25000,${lat},${lng});` +
+        `way["amenity"="shelter"](around:25000,${lat},${lng});` +
+        `node["amenity"="social_centre"](around:25000,${lat},${lng});` +
+        `);out center 80;`;
+      try {
+        const r = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", body: q });
+        const j = await r.json();
+        return (j.elements || []).map((el: { lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }) => {
+          const la = el.lat ?? el.center?.lat;
+          const ln = el.lon ?? el.center?.lon;
+          if (la == null || ln == null) return null;
+          const t = el.tags || {};
+          const addr = [[t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" "), t["addr:city"]].filter(Boolean).join(", ");
+          return { name: t.name || "Shelter / social services", address: addr || "Community / social services", lat: la, lng: ln } as Pin;
+        }).filter(Boolean) as Pin[];
+      } catch {
+        return [];
+      }
+    }
+
     (async () => {
       const c = await geo(location);
       if (cancelled) return;
       setCenter(c ? { lat: c.lat, lng: c.lng } : null);
       const ps: Pin[] = [];
+      // 1) the curated resources from the plan (most relevant — named, with phones)
       for (const r of resources.slice(0, 6)) {
         const g = await geo(`${r.name}, ${location}`);
         if (g) ps.push({ name: r.name, address: g.address, lat: g.lat, lng: g.lng });
       }
-      if (ps.length === 0) {
-        const g = await geo(`homeless shelter, ${location}`);
-        if (g) ps.push({ name: "Nearby shelter", address: g.address, lat: g.lat, lng: g.lng });
+      // 2) many more real shelters/social services from OpenStreetMap
+      if (c) ps.push(...(await overpass(c.lat, c.lng)));
+
+      // dedupe by location, prefer named entries, cap the count
+      const seen = new Set<string>();
+      const deduped: Pin[] = [];
+      for (const p of ps) {
+        const k = `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        deduped.push(p);
       }
-      if (!cancelled) { setPins(ps); setLoading(false); }
+      if (!cancelled) { setPins(deduped.slice(0, 80)); setLoading(false); }
     })();
     return () => { cancelled = true; };
   }, [location, resources]);
@@ -65,7 +99,9 @@ export default function ShelterMap({ location, resources = [] }: { location: str
         <MapPinned className="h-5 w-5 text-gold" />
         <h3 className="text-lg">Help on the map, near {location}</h3>
       </div>
-      <p className="mt-1 text-sm text-muted">Hover or tap a glowing point to see the shelter&apos;s name and address.</p>
+      <p className="mt-1 text-sm text-muted">
+        {pins.length > 0 ? `${pins.length} places near you. ` : ""}Hover or tap a glowing point to see its name and address.
+      </p>
       <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)] glow-gold">
         {loading || !center ? (
           <div className="flex h-[380px] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div>
@@ -73,12 +109,13 @@ export default function ShelterMap({ location, resources = [] }: { location: str
           <MapInner center={center} pins={pins} />
         )}
       </div>
-      {/* accessible, screen-reader-friendly list of the same points */}
+      {/* accessible, screen-reader-friendly list of the points (capped) */}
       {pins.length > 0 && (
         <ul className="mt-3 space-y-1 text-sm text-muted">
-          {pins.map((p, i) => (
+          {pins.slice(0, 12).map((p, i) => (
             <li key={i}><span className="text-ink">{p.name}</span> — {p.address}</li>
           ))}
+          {pins.length > 12 && <li className="text-muted/70">…and {pins.length - 12} more on the map</li>}
         </ul>
       )}
     </div>
