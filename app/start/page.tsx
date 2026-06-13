@@ -27,10 +27,14 @@ export default function Start() {
   const [autoRun, setAutoRun] = useState(false);
   const ran = useRef(false);
 
-  function pickLocation(label: string, lat: number, lng: number) {
+  function pickLocation(label: string, lat?: number, lng?: number) {
     setLocation(label);
     setLocationPicked(true);
-    localStorage.setItem("yn_coords", JSON.stringify({ lat, lng }));
+    if (typeof lat === "number" && typeof lng === "number" && isFinite(lat) && isFinite(lng)) {
+      localStorage.setItem("yn_coords", JSON.stringify({ lat, lng }));
+    } else {
+      localStorage.removeItem("yn_coords"); // map/weather will geocode the label instead
+    }
   }
 
   function loadSample() {
@@ -169,6 +173,7 @@ export default function Start() {
                 value={situation}
                 onChange={(e) => setSituation(e.target.value)}
                 rows={5}
+                aria-label="Describe your situation in your own words"
                 placeholder={advocate ? "e.g. They lost their job, are staying in their car, and lost their ID…" : "e.g. I lost my job a month ago, I've been staying in my car, and I don't have my ID anymore…"}
                 className="w-full resize-none bg-transparent text-lg leading-relaxed outline-none placeholder:text-muted/60"
               />

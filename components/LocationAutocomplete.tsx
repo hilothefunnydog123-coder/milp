@@ -20,7 +20,7 @@ export default function LocationAutocomplete({
 }: {
   value: string;
   picked: boolean;
-  onPick: (label: string, lat: number, lng: number) => void;
+  onPick: (label: string, lat?: number, lng?: number) => void;
   onType: (text: string) => void;
 }) {
   const [results, setResults] = useState<Place[]>([]);
@@ -74,6 +74,7 @@ export default function LocationAutocomplete({
           onChange={(e) => { onType(e.target.value); setOpen(true); }}
           onFocus={() => results.length && setOpen(true)}
           placeholder="Start typing a city…"
+          aria-label="Your city"
           className="mt-0 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 pl-10 pr-9 outline-none focus:border-gold/60"
           autoComplete="off"
         />
@@ -94,8 +95,17 @@ export default function LocationAutocomplete({
               </button>
             </li>
           ))}
-          {!loading && results.length === 0 && (
-            <li className="px-3 py-2.5 text-muted">No matches — keep typing the city and country.</li>
+          {!loading && results.length === 0 && value.trim().length >= 2 && (
+            <li>
+              <button
+                type="button"
+                onClick={() => { onPick(value.trim()); setOpen(false); }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left transition hover:bg-gold/10"
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-gold" /> Use &ldquo;{value.trim()}&rdquo;
+                <span className="ml-auto text-xs text-muted">add the state &amp; country to be exact</span>
+              </button>
+            </li>
           )}
         </ul>
       )}
