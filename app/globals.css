@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fcf6ec;        /* warm cream — morning light */
-  --ink: #2b2520;       /* warm near-black, highly readable */
-  --muted: #7c7468;     /* warm gray */
-  --line: rgba(43, 37, 32, 0.10);
-  --gold: #cf8a2a;      /* sunrise gold */
-  --rose: #e87a55;      /* warm coral */
-  --teal: #138b78;      /* hopeful green */
-  --panel: #ffffff;
+  --bg: #0a0e17;
+  --ink: #eef1f6;
+  --muted: #8b94a8;
+  --line: rgba(255, 255, 255, 0.08);
+  --gold: #e8b873;
+  --rose: #e08a72;
+  --teal: #74cdbd;
+  --panel: rgba(255, 255, 255, 0.035);
 }
 
 @theme inline {
@@ -33,51 +33,54 @@ html, body {
   line-height: 1.55;
   scroll-behavior: smooth;
 }
-body { font-size: 1rem; }
 
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
   font-weight: 500;
   letter-spacing: -0.015em;
-  line-height: 1.08;
+  line-height: 1.1;
 }
 p { text-wrap: pretty; }
 
-::selection { background: rgba(207, 138, 42, 0.22); }
+::selection { background: rgba(232, 184, 115, 0.28); }
 
-/* smoother everything */
-a, button, input, textarea, select, .glass {
-  transition: color .2s ease, background-color .2s ease, border-color .2s ease,
-    box-shadow .25s ease, transform .18s cubic-bezier(.22,1,.36,1);
-}
-
-/* ---------- bright sunrise background ---------- */
+/* ---------- refined dawn background: a calm sky with a low warm horizon ---------- */
 .sky {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(120% 75% at 50% -18%, rgba(255, 209, 138, 0.65), transparent 60%),
-    radial-gradient(85% 55% at 88% 4%, rgba(255, 168, 138, 0.32), transparent 55%),
-    radial-gradient(80% 60% at 8% 102%, rgba(120, 205, 189, 0.22), transparent 60%),
-    linear-gradient(180deg, #fff3de 0%, #fdf7ee 45%, #f6f1ff 100%);
+    radial-gradient(140% 60% at 50% 116%, rgba(232, 184, 115, 0.22), transparent 62%),
+    radial-gradient(150% 55% at 50% 128%, rgba(224, 138, 114, 0.16), transparent 60%),
+    linear-gradient(180deg, #070a12 0%, #0a0e17 55%, #0d121d 100%);
 }
-/* a gentle rising sun */
+.sky::after { /* a single fine horizon line of light */
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,184,115,0.35), transparent);
+}
 .northstar {
   position: fixed;
-  top: 5%; left: 50%;
-  width: 96px; height: 96px;
-  transform: translateX(-50%);
-  z-index: 0; pointer-events: none; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,226,165,0.95), rgba(255,206,140,0.4) 45%, transparent 72%);
-  animation: sun 7s ease-in-out infinite;
+  top: 12%; left: 50%;
+  width: 4px; height: 4px;
+  z-index: 0; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px 2px rgba(232, 184, 115, 0.8), 0 0 26px 6px rgba(232, 184, 115, 0.28);
+  animation: twinkle 4s ease-in-out infinite;
 }
-@keyframes sun {
-  0%,100% { opacity: .8; transform: translateX(-50%) scale(1); }
-  50% { opacity: 1; transform: translateX(-50%) scale(1.07); }
+@keyframes twinkle { 0%,100% { opacity: .65; } 50% { opacity: 1; } }
+.stars::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 18% 20%, rgba(255,255,255,0.55), transparent),
+    radial-gradient(1px 1px at 72% 14%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 42% 26%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 86% 24%, rgba(255,255,255,0.4), transparent);
 }
-.stars::before { content: none; }
 
 /* ---------- components ---------- */
 .warm-text {
@@ -85,82 +88,82 @@ a, button, input, textarea, select, .glass {
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .glass {
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(43, 37, 32, 0.08);
-  box-shadow: 0 1px 2px rgba(90,65,30,0.04), 0 14px 30px -18px rgba(150,110,50,0.28);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025));
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.3);
 }
 .glow-gold {
-  background: rgba(255, 252, 245, 0.9);
-  border: 1px solid rgba(207, 138, 42, 0.45) !important;
-  box-shadow: 0 1px 2px rgba(90,65,30,0.05), 0 12px 34px -14px rgba(207, 138, 42, 0.4) !important;
+  border-color: rgba(232, 184, 115, 0.4) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 30px -12px rgba(232, 184, 115, 0.35);
 }
 .btn-gold {
   background: linear-gradient(96deg, var(--gold), var(--rose));
-  color: #fff8ef; font-weight: 650;
-  box-shadow: 0 8px 20px -8px rgba(207,138,42,0.55);
+  color: #1c1306; font-weight: 600;
+  transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
 }
-.btn-gold:hover { transform: translateY(-2px); filter: brightness(1.04); box-shadow: 0 14px 32px -8px rgba(232,122,85,0.55); }
-.btn-gold:active { transform: translateY(0); }
-.trail { background: linear-gradient(120deg, var(--gold), var(--rose)); }
+.btn-gold:hover { transform: translateY(-1px); filter: brightness(1.04); box-shadow: 0 10px 30px -12px rgba(232,184,115,0.55); }
+.trail { background: linear-gradient(180deg, var(--gold), rgba(232, 184, 115, 0.12)); }
 
-input:focus, textarea:focus, button:focus-visible, select:focus { outline: none; }
-input:focus-visible, textarea:focus-visible, select:focus-visible {
-  box-shadow: 0 0 0 3px rgba(207,138,42,0.3);
+input:focus, textarea:focus, button:focus-visible {
+  outline: none;
+}
+input:focus-visible, textarea:focus-visible {
+  box-shadow: 0 0 0 2px rgba(232,184,115,0.35);
 }
 
 *::-webkit-scrollbar { width: 9px; height: 9px; }
-*::-webkit-scrollbar-thumb { background: rgba(43,37,32,0.18); border-radius: 9px; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 9px; }
 
 @media (prefers-reduced-motion: reduce) { .northstar { animation: none; } }
 
 /* ---------- accessibility mode ---------- */
+body { font-size: 1rem; }
 html.txt-large { font-size: 20px; }
 html.high-contrast {
-  --ink: #000000;
-  --muted: #3a342c;
-  --line: rgba(0, 0, 0, 0.45);
-  --bg: #ffffff;
+  --ink: #ffffff;
+  --muted: #d7ddee;
+  --line: rgba(255, 255, 255, 0.3);
 }
-html.high-contrast .sky { opacity: 0.35; }
+html.high-contrast .sky { opacity: 0.5; }
 
-/* ---------- print: clean ink-friendly one-pager ---------- */
+/* ---------- print: a clean, ink-friendly one-pager ---------- */
 @media print {
   .no-print { display: none !important; }
   .sky, .northstar { display: none !important; }
   html, body { background: #fff !important; color: #000 !important; font-size: 12pt; }
   * { color: #000 !important; box-shadow: none !important; }
   .glass, .glow-gold, .cert { background: #fff !important; border: 1px solid #ccc !important; }
-  .warm-text { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+  .warm-text, .gradient-text { color: #000 !important; -webkit-text-fill-color: #000 !important; }
   a { color: #000 !important; text-decoration: underline; }
 }
 
-/* ---------- shelter map ---------- */
+/* ---------- shelter map (Jarvis-style HUD) ---------- */
 .yn-pin {
   width: 14px; height: 14px; border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 0 3px rgba(207,138,42,0.25), 0 0 12px 3px rgba(207,138,42,0.7);
+  box-shadow: 0 0 0 4px rgba(232,184,115,0.25), 0 0 14px 4px rgba(232,184,115,0.8);
   animation: ping 2s ease-out infinite;
 }
 .yn-pin-you {
   background: var(--teal);
-  box-shadow: 0 0 0 3px rgba(19,139,120,0.25), 0 0 12px 3px rgba(19,139,120,0.7);
+  box-shadow: 0 0 0 4px rgba(116,205,189,0.25), 0 0 14px 4px rgba(116,205,189,0.85);
 }
 @keyframes ping {
-  0% { box-shadow: 0 0 0 0 rgba(207,138,42,0.5), 0 0 12px 3px rgba(207,138,42,0.7); }
-  70% { box-shadow: 0 0 0 12px rgba(207,138,42,0), 0 0 12px 3px rgba(207,138,42,0.7); }
-  100% { box-shadow: 0 0 0 0 rgba(207,138,42,0), 0 0 12px 3px rgba(207,138,42,0.7); }
+  0% { box-shadow: 0 0 0 0 rgba(232,184,115,0.5), 0 0 14px 4px rgba(232,184,115,0.8); }
+  70% { box-shadow: 0 0 0 12px rgba(232,184,115,0), 0 0 14px 4px rgba(232,184,115,0.8); }
+  100% { box-shadow: 0 0 0 0 rgba(232,184,115,0), 0 0 14px 4px rgba(232,184,115,0.8); }
 }
+/* readable, high-contrast tooltips (accessibility) */
 .leaflet-tooltip.yn-tip {
-  background: #ffffff;
-  color: #2b2520;
-  border: 1px solid rgba(207,138,42,0.5);
+  background: #0c1322;
+  color: #f4efe6;
+  border: 1px solid rgba(232,184,115,0.5);
   border-radius: 10px;
   padding: 8px 11px;
   font-size: 14px;
   line-height: 1.35;
-  box-shadow: 0 8px 24px rgba(90,65,30,0.18);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
-.leaflet-tooltip.yn-tip::before { border-top-color: rgba(207,138,42,0.5); }
-.leaflet-container { font-family: var(--font-sans); background: #eef3f8; }
-.leaflet-control-zoom a { background: #fff !important; color: var(--gold) !important; border-color: rgba(43,37,32,0.12) !important; }
+.leaflet-tooltip.yn-tip::before { border-top-color: rgba(232,184,115,0.5); }
+.leaflet-container { font-family: var(--font-sans); }
+.leaflet-control-zoom a { background: #0c1322 !important; color: #e8b873 !important; border-color: var(--line) !important; }

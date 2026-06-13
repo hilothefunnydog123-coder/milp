@@ -200,11 +200,11 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
         <div className="mt-5 space-y-3">
           <div>
             <label className="text-sm text-muted">Your first name <span className="text-muted/60">(so we can introduce you)</span></label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Maria" className="mt-1 w-full rounded-xl border border-[var(--line)] bg-black/[0.04] px-4 py-3 text-lg outline-none focus:border-gold/60" />
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Maria" className="mt-1 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-lg outline-none focus:border-gold/60" />
           </div>
           <div>
             <label className="text-sm text-muted">Number to call {label !== "the help line" && <span className="text-gold">· {label}</span>}</label>
-            <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="A help line, a resource above, or your own phone to test" className="mt-1 w-full rounded-xl border border-[var(--line)] bg-black/[0.04] px-4 py-3 text-lg outline-none focus:border-gold/60" inputMode="tel" />
+            <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="A help line, a resource above, or your own phone to test" className="mt-1 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 text-lg outline-none focus:border-gold/60" inputMode="tel" />
           </div>
           <label className="flex items-start gap-3 rounded-xl border border-[var(--line)] p-3.5 text-sm">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 accent-[var(--gold)]" />
@@ -228,7 +228,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
             <span className={`relative inline-flex h-3 w-3 rounded-full ${phase === "calling" ? "bg-gold" : "bg-teal"}`} />
           </span>
           <span className="font-semibold">{status}</span>
-          {provider === "mock" && <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[10px] uppercase text-muted">demo</span>}
+          {provider === "mock" && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase text-muted">demo</span>}
         </div>
         <div className="flex items-center gap-3 text-sm text-muted">
           <span className="flex items-center gap-1.5"><Loader2 className={`h-4 w-4 ${phase === "calling" ? "animate-spin" : "hidden"}`} /><span className="font-mono tabular-nums">{fmt(seconds)}</span></span>
@@ -248,7 +248,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
         <AnimatePresence initial={false}>
           {transcript.map((t, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-2.5 ${t.speaker === "assistant" ? "" : "flex-row-reverse"}`}>
-              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${t.speaker === "assistant" ? "bg-gold/20 text-gold" : "bg-black/[0.06] text-ink"}`}>
+              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${t.speaker === "assistant" ? "bg-gold/20 text-gold" : "bg-white/10 text-ink"}`}>
                 {t.speaker === "assistant" ? <Bot className="h-4 w-4" /> : <PhoneCall className="h-4 w-4" />}
               </div>
               <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${t.speaker === "assistant" ? "bg-gold/10" : "glass"}`}>{t.text}</div>

@@ -16,11 +16,11 @@ export default function MapInner({ center, pins }: { center: { lat: number; lng:
       center={[center.lat, center.lng]}
       zoom={12}
       scrollWheelZoom={false}
-      style={{ height: "380px", width: "100%", background: "#eef3f8" }}
+      style={{ height: "380px", width: "100%", background: "#0a0e17" }}
       attributionControl={false}
     >
-      {/* bright, warm basemap — free, no API key (CARTO Voyager) */}
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+      {/* dark "HUD" basemap — free, no API key (CARTO dark) */}
+      <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
 
       <Marker position={[center.lat, center.lng]} icon={youIcon}>
         <Tooltip direction="top" offset={[0, -8]} className="yn-tip">

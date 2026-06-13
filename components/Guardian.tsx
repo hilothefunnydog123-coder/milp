@@ -221,7 +221,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
         </div>
       </div>
 
-      {note && callState === "" && <p className="mt-4 rounded-xl bg-black/[0.04] p-3 text-sm text-muted">{note}</p>}
+      {note && callState === "" && <p className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-muted">{note}</p>}
 
       {/* actions */}
       {callState === "" && !booking && (
@@ -238,7 +238,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
             <span className="text-sm font-semibold text-teal">Confirm — your call, your consent</span>
             <button onClick={() => setBooking(false)} aria-label="Cancel"><X className="h-4 w-4 text-muted" /></button>
           </div>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your first name (to reserve under)" className="w-full rounded-xl border border-[var(--line)] bg-black/[0.04] px-4 py-3 outline-none focus:border-gold/60" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your first name (to reserve under)" className="w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
           <label className="mt-3 flex items-start gap-3 text-sm">
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 accent-[var(--gold)]" />
             <span className="text-muted">I agree to let YNorth call {vacancy?.name} and reserve this bed for me.</span>
@@ -264,7 +264,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
             <AnimatePresence initial={false}>
               {transcript.map((t, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex gap-2.5 ${t.speaker === "assistant" ? "" : "flex-row-reverse"}`}>
-                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${t.speaker === "assistant" ? "bg-gold/20 text-gold" : "bg-black/[0.06]"}`}>
+                  <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${t.speaker === "assistant" ? "bg-gold/20 text-gold" : "bg-white/10"}`}>
                     {t.speaker === "assistant" ? <Bot className="h-3.5 w-3.5" /> : <PhoneCall className="h-3.5 w-3.5" />}
                   </div>
                   <div className={`max-w-[80%] rounded-2xl px-3 py-1.5 text-sm ${t.speaker === "assistant" ? "bg-gold/10" : "glass"}`}>{t.text}</div>
