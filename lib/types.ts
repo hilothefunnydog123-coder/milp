@@ -16,6 +16,8 @@ export interface CompassStep {
   action: string;
   /** documents this step needs */
   docs: string[];
+  /** learning-model category for this step (safety, shelter, rent, …) */
+  category?: string;
   /** key into the curated RESOURCES map (real, universal systems only) */
   resourceKey?: string;
 }
@@ -43,6 +45,10 @@ export interface CompassPath {
   localResources: LocalResource[];
   /** grounding citations for the local resources */
   sources: Source[];
+  /** situation signals derived for the learning model */
+  tags: string[];
+  /** what the learning model knows so far */
+  community: { runs: number; top: string[] };
   location: string;
   createdAt: string;
 }
