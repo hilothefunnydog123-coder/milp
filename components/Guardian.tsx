@@ -14,8 +14,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Radar, Check, BellRing, BedDouble, PhoneCall, Bot, MapPinned,
-  Loader2, ShieldCheck, Sparkles, X,
+  Radar, Check, BellRing, BedDouble, PhoneCall, PhoneOff, Bot, MapPinned,
+  Loader2, ShieldCheck, Sparkles, X, Ban,
 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
 
@@ -50,13 +50,33 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   const [consent, setConsent] = useState(false);
   const [callState, setCallState] = useState<"" | "calling" | "booked">("");
   const [transcript, setTranscript] = useState<Turn[]>([]);
+  const [controlUrl, setControlUrl] = useState("");
+  const [note, setNote] = useState("");
+  const bookingPoll = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // transportation sub-flow
   const [transport, setTransport] = useState("");
   const [transportLoading, setTransportLoading] = useState(false);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  useEffect(() => () => { timers.current.forEach(clearTimeout); if (bookingPoll.current) clearInterval(bookingPoll.current); }, []);
+
+  // hang up an in-progress booking call
+  function hangUp() {
+    timers.current.forEach(clearTimeout);
+    if (bookingPoll.current) clearInterval(bookingPoll.current);
+    if (controlUrl) {
+      fetch("/api/call", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end", controlUrl }) }).catch(() => {});
+    }
+    setCallState(""); setBooking(false); setTranscript([]);
+    setNote("Call ended. The bed is still open if you change your mind.");
+  }
+
+  // cancel a confirmed reservation
+  function cancelReservation() {
+    setCallState(""); setBooking(false); setTranscript([]);
+    setNote("Reservation canceled — the bed was released. You can re-book or look for another.");
+  }
 
   function situation() {
     return typeof window !== "undefined" ? localStorage.getItem("yn_situation") || "is experiencing a housing emergency" : "";
@@ -95,7 +115,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   // ---- book the bed by phone (Vapi, or safe demo sim) ----
   async function book() {
     setCallState("calling");
-    setTranscript([]);
+    setTranscript([]); setNote("");
     const number = extractPhone(vacancy?.contact) || "+15555550100";
     const objective = `Book the emergency bed that just opened at ${vacancy?.name} for ${name} for tonight. Confirm the address, what time to arrive, and what to bring.`;
     try {
@@ -104,6 +124,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
         body: JSON.stringify({ name, number, objective, situation: situation(), firstMessage: `Hi, I'm an assistant calling on behalf of ${name}. I understand a bed just opened up — I'd love to reserve it for them tonight.` }),
       });
       const data = await res.json();
+      setControlUrl(data.controlUrl || "");
       if (data.provider === "mock") simulateBooking();
       else pollBooking(data.callId);
     } catch { simulateBooking(); }
@@ -124,13 +145,13 @@ export default function Guardian({ resources = [], location = "your area" }: { r
 
   function pollBooking(callId: string) {
     const started = Date.now();
-    const iv = setInterval(async () => {
+    bookingPoll.current = setInterval(async () => {
       try {
         const r = await fetch(`/api/call/${callId}`);
         const d = await r.json();
         if (Array.isArray(d.transcript) && d.transcript.length) setTranscript(d.transcript);
         if (d.status === "completed" || Date.now() - started > 180000) {
-          clearInterval(iv);
+          if (bookingPoll.current) clearInterval(bookingPoll.current);
           setCallState("booked");
         }
       } catch { /* keep polling */ }
@@ -195,6 +216,8 @@ export default function Guardian({ resources = [], location = "your area" }: { r
         </div>
       </div>
 
+      {note && callState === "" && <p className="mt-4 rounded-xl bg-white/5 p-3 text-sm text-muted">{note}</p>}
+
       {/* actions */}
       {callState === "" && !booking && (
         <div className="mt-5 flex flex-wrap gap-3">
@@ -222,8 +245,15 @@ export default function Guardian({ resources = [], location = "your area" }: { r
       {/* booking call */}
       {callState && (
         <div className="mt-5">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            {callState === "calling" ? <><Loader2 className="h-4 w-4 animate-spin text-gold" /> Reserving your bed…</> : <><Check className="h-4 w-4 text-teal" /> Bed reserved</>}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              {callState === "calling" ? <><Loader2 className="h-4 w-4 animate-spin text-gold" /> Reserving your bed…</> : <><Check className="h-4 w-4 text-teal" /> Bed reserved</>}
+            </div>
+            {callState === "calling" && (
+              <button onClick={hangUp} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--rose)]/15 px-3 py-1.5 text-sm font-semibold text-[var(--rose)] transition hover:bg-[var(--rose)]/25">
+                <PhoneOff className="h-3.5 w-3.5" /> Hang up
+              </button>
+            )}
           </div>
           <div className="mt-3 space-y-2.5">
             <AnimatePresence initial={false}>
@@ -241,7 +271,10 @@ export default function Guardian({ resources = [], location = "your area" }: { r
             <div className="mt-4 rounded-2xl bg-teal/5 p-4 text-sm">
               <div className="flex items-center gap-2 font-semibold text-teal"><Sparkles className="h-4 w-4" /> You have a bed tonight, {name}.</div>
               <p className="mt-1 text-muted">Arrive by 8pm. Bring a photo ID if you have one — it&apos;s okay if you don&apos;t. Want directions? Tap below.</p>
-              <button onClick={getTransport} className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-ink transition hover:border-gold/50"><MapPinned className="h-4 w-4 text-teal" /> How do I get there?</button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button onClick={getTransport} className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-ink transition hover:border-gold/50"><MapPinned className="h-4 w-4 text-teal" /> How do I get there?</button>
+                <button onClick={cancelReservation} className="inline-flex items-center gap-2 rounded-full border border-[var(--rose)]/30 px-4 py-2 text-[var(--rose)] transition hover:bg-[var(--rose)]/10"><Ban className="h-4 w-4" /> Cancel reservation</button>
+              </div>
             </div>
           )}
         </div>
