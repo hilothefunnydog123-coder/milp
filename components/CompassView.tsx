@@ -20,6 +20,7 @@ import {
   MessageSquareQuote,
 } from "lucide-react";
 import AnimatedNumber from "./AnimatedNumber";
+import CallForMe from "./CallForMe";
 import type { CompassPath } from "@/lib/types";
 
 const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
@@ -277,6 +278,9 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           );
         })}
       </div>
+
+      {/* let YNorth make the call */}
+      {!readOnly && <CallForMe />}
 
       {/* documents */}
       {path.documents.length > 0 && (
