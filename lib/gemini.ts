@@ -30,6 +30,56 @@ export async function callGemini(
   }
 }
 
+/**
+ * Gemini WITH Google Search grounding — returns real, current, cited results.
+ * This is how we get specific LOCAL resources without hallucinating them.
+ */
+export async function callGeminiGrounded(
+  prompt: string,
+  temperature: number
+): Promise<{ text: string; sources: { title: string; uri: string }[] }> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return { text: "", sources: [] };
+  try {
+    const res = await fetch(`${GEMINI_URL}?key=${key}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature },
+      }),
+    });
+    if (!res.ok) return { text: "", sources: [] };
+    const json = await res.json();
+    const cand = json.candidates?.[0];
+    const text = cand?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") ?? "";
+    const chunks = cand?.groundingMetadata?.groundingChunks ?? [];
+    const sources = chunks
+      .map((c: { web?: { uri?: string; title?: string } }) => ({
+        title: c.web?.title || "",
+        uri: c.web?.uri || "",
+      }))
+      .filter((s: { uri: string }) => s.uri)
+      .slice(0, 6);
+    return { text: text.trim(), sources };
+  } catch {
+    return { text: "", sources: [] };
+  }
+}
+
+export function extractJsonArray(text: string): unknown[] {
+  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const start = cleaned.indexOf("[");
+  const end = cleaned.lastIndexOf("]");
+  if (start === -1 || end === -1) return [];
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1)) as unknown[];
+  } catch {
+    return [];
+  }
+}
+
 export function extractJson(text: string): Record<string, unknown> | null {
   const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
   const start = cleaned.indexOf("{");

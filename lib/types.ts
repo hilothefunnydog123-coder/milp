@@ -20,6 +20,17 @@ export interface CompassStep {
   resourceKey?: string;
 }
 
+export interface LocalResource {
+  name: string;
+  helpsWith: string;
+  contact?: string;
+}
+
+export interface Source {
+  title: string;
+  uri: string;
+}
+
 export interface CompassPath {
   /** a warm, plain one-paragraph reflection of their situation + hope */
   summary: string;
@@ -28,6 +39,10 @@ export interface CompassPath {
   documents: string[];
   /** resource keys relevant to this person (subset of RESOURCES) */
   resources: string[];
+  /** REAL, location-specific orgs found via grounded search (cited) */
+  localResources: LocalResource[];
+  /** grounding citations for the local resources */
+  sources: Source[];
   location: string;
   createdAt: string;
 }

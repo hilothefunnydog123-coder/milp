@@ -20,9 +20,9 @@ import {
   Circle,
   HelpCircle,
   Share2,
-  Copy,
   Sparkles,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import { RESOURCES } from "@/lib/resources";
 import type { CompassPath } from "@/lib/types";
@@ -130,7 +130,7 @@ export default function CompassView({
       <div className="glass mt-6 rounded-2xl p-5">
         <div className="flex items-center justify-between text-sm">
           <span className="font-semibold">
-            {completed} of {total} steps {completed === total ? "— you did it 🎉" : "done"}
+            {completed} of {total} steps {completed === total ? "— you made it" : "done"}
           </span>
           <span className="text-muted">{pct}%</span>
         </div>
@@ -246,10 +246,55 @@ export default function CompassView({
         </div>
       )}
 
-      {/* resources */}
+      {/* REAL local resources (grounded search) */}
+      {path.localResources && path.localResources.length > 0 && (
+        <div className="mt-8">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-gold" />
+            <h3 className="text-lg">Real help near {path.location}</h3>
+          </div>
+          <p className="mt-1 text-sm text-muted">
+            Found with live search and tailored to your situation. Please confirm details when you reach out.
+          </p>
+          <div className="mt-4 space-y-3">
+            {path.localResources.map((r, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.06, 0.4) }}
+                className="glass rounded-2xl p-4"
+              >
+                <div className="font-semibold">{r.name}</div>
+                <p className="mt-1 text-sm text-muted">{r.helpsWith}</p>
+                {r.contact && <p className="mt-1.5 text-sm text-teal">{r.contact}</p>}
+              </motion.div>
+            ))}
+          </div>
+          {path.sources && path.sources.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="text-xs text-muted">Sources:</span>
+              {path.sources.map((s, i) => (
+                <a
+                  key={i}
+                  href={s.uri}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-gold/90 underline-offset-2 hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {s.title || new URL(s.uri).hostname}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* universal resources */}
       {path.resources.length > 0 && (
         <div className="mt-6">
-          <h3 className="mb-3 text-lg">Real help, anytime</h3>
+          <h3 className="mb-3 text-lg">Help you can reach from anywhere</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {path.resources.map((k) => {
               const r = RESOURCES[k];
