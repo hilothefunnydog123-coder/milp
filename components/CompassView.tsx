@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import AnimatedNumber from "./AnimatedNumber";
 import CallForMe from "./CallForMe";
+import Guardian from "./Guardian";
 import type { CompassPath } from "@/lib/types";
 
 const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
@@ -141,6 +142,9 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
         <div className="flex items-center gap-2 text-sm text-gold"><Sparkles className="h-4 w-4" /> Your path · {path.location}</div>
         <p className="mt-3 font-display text-2xl leading-snug">{path.summary}</p>
       </motion.div>
+
+      {/* THE hero action — let YNorth make the call for you */}
+      {!readOnly && <CallForMe resources={path.localResources} />}
 
       {/* learning model — community wisdom */}
       {(path.community?.top?.length ?? 0) > 0 && (
@@ -279,8 +283,8 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
         })}
       </div>
 
-      {/* let YNorth make the call */}
-      {!readOnly && <CallForMe />}
+      {/* autonomous agent: keeps watching, books, guides transport */}
+      {!readOnly && <Guardian resources={path.localResources} location={path.location} />}
 
       {/* documents */}
       {path.documents.length > 0 && (
@@ -327,7 +331,25 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
         </div>
       )}
 
-      <p className="mt-10 text-center text-sm text-muted">
+      {/* transparency: what AI is doing the work */}
+      <div className="mt-10 rounded-2xl border border-[var(--line)] p-5">
+        <div className="flex items-center gap-2 text-sm font-semibold text-muted"><Sparkles className="h-4 w-4 text-gold" /> How YNorth&apos;s AI works</div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {[
+            { I: Sparkles, t: "Gemini 2.5 Flash", d: "Plans your path, writes your call scripts, translates, and explains everything in plain language." },
+            { I: MapPin, t: "Google Search grounding", d: "Finds real, local, cited resources live — it can never invent a fake shelter or number." },
+            { I: Phone, t: "Vapi voice agent", d: "Places real two-way phone calls on your behalf, in your language, and books beds." },
+            { I: Brain, t: "YNorth Brain", d: "A self-improving model that learns from every journey what truly helps, for the next person." },
+          ].map((x) => (
+            <div key={x.t} className="flex gap-3">
+              <x.I className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+              <div><div className="text-sm font-semibold">{x.t}</div><div className="text-xs leading-relaxed text-muted">{x.d}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="mt-8 text-center text-sm text-muted">
         <Phone className="mr-1 inline h-4 w-4 text-gold" /> You are not alone. Crisis support is always one call or text away at{" "}
         <span className="font-semibold text-ink">988</span>.
       </p>
