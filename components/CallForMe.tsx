@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   PhoneCall,
+  PhoneOff,
   Bot,
   Loader2,
   ShieldCheck,
   ListChecks,
-  X,
   Volume2,
   Square,
   Sparkles,
@@ -38,6 +38,8 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
   const [transcript, setTranscript] = useState<Turn[]>([]);
   const [instructions, setInstructions] = useState("");
   const [provider, setProvider] = useState("");
+  const [controlUrl, setControlUrl] = useState("");
+  const [canceled, setCanceled] = useState(false);
   const [error, setError] = useState("");
   const [seconds, setSeconds] = useState(0);
   const [speaking, setSpeaking] = useState(false);
@@ -68,8 +70,20 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
   }
 
+  function hangUp() {
+    timers.current.forEach(clearTimeout);
+    if (poll.current) clearInterval(poll.current);
+    stopClock();
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    if (provider === "vapi" && controlUrl) {
+      fetch("/api/call", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end", controlUrl }) }).catch(() => {});
+    }
+    setCanceled(true);
+    setPhase("done");
+  }
+
   async function start() {
-    setError(""); setTranscript([]); setInstructions(""); setSeconds(0);
+    setError(""); setTranscript([]); setInstructions(""); setSeconds(0); setCanceled(false);
     setPhase("calling");
     clock.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     const lang = localStorage.getItem("yn_lang") || "English";
@@ -82,6 +96,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
       const data = await res.json();
       if (data.error) { setError(data.error); setPhase("error"); stopClock(); return; }
       setProvider(data.provider);
+      setControlUrl(data.controlUrl || "");
       if (data.provider === "mock") simulate();
       else pollVapi(data.callId);
     } catch {
@@ -142,7 +157,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); setSpeaking(true);
   }
 
-  const status = phase === "calling" ? (transcript.length === 0 ? "Connecting…" : "On the call") : "Call complete";
+  const status = canceled ? "Call ended" : phase === "calling" ? (transcript.length === 0 ? "Connecting…" : "On the call") : "Call complete";
 
   // ---------- HERO PROMPT ----------
   if (phase === "idle") {
@@ -215,12 +230,17 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
           <span className="font-semibold">{status}</span>
           {provider === "mock" && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase text-muted">demo</span>}
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted">
-          {phase === "calling" ? <Loader2 className="h-4 w-4 animate-spin" /> : <PhoneCall className="h-4 w-4 text-teal" />}
-          <span className="font-mono tabular-nums">{fmt(seconds)}</span>
+        <div className="flex items-center gap-3 text-sm text-muted">
+          <span className="flex items-center gap-1.5"><Loader2 className={`h-4 w-4 ${phase === "calling" ? "animate-spin" : "hidden"}`} /><span className="font-mono tabular-nums">{fmt(seconds)}</span></span>
+          {phase === "calling" && (
+            <button onClick={hangUp} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--rose)]/15 px-3 py-1.5 font-semibold text-[var(--rose)] transition hover:bg-[var(--rose)]/25">
+              <PhoneOff className="h-3.5 w-3.5" /> Hang up
+            </button>
+          )}
         </div>
       </div>
       <p className="mt-1 text-sm text-muted">Calling {label}{number ? ` · ${number}` : ""}</p>
+      {canceled && <p className="mt-3 text-sm text-muted">You ended the call. You can start again whenever you&apos;re ready — no pressure.</p>}
 
       {error && <p className="mt-3 text-sm text-[var(--rose)]">{error}</p>}
 
@@ -249,6 +269,11 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink/90">{instructions}</p>
           <button onClick={() => { setPhase("idle"); setConsent(false); }} className="mt-4 text-sm text-muted underline-offset-2 hover:text-ink hover:underline">Make another call</button>
         </motion.div>
+      )}
+      {canceled && (
+        <button onClick={() => { setPhase("idle"); setConsent(false); setTranscript([]); }} className="btn-gold mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm">
+          <PhoneCall className="h-4 w-4" /> Make another call
+        </button>
       )}
     </div>
   );

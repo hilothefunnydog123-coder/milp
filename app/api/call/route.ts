@@ -22,6 +22,21 @@ interface Turn { speaker: string; text: string }
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
+  // ---- end / hang up a live call (best-effort via Vapi live control) ----
+  if (body.action === "end") {
+    const controlUrl = String(body.controlUrl || "");
+    if (controlUrl) {
+      try {
+        await fetch(controlUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "end-call" }),
+        });
+      } catch { /* the UI ends regardless */ }
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   // ---- summarize the finished call into next steps for the person ----
   if (body.action === "instructions") {
     const name = String(body.name || "you").slice(0, 40);
@@ -87,14 +102,15 @@ Reply with only the instructions.`;
     const r = await fetch("https://api.vapi.ai/call", {
       method: "POST",
       headers: { Authorization: `Bearer ${VAPI_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ phoneNumberId: VAPI_PHONE_NUMBER_ID, customer: { number }, assistant }),
+      // monitorPlan.controlEnabled returns a controlUrl we can POST to to hang up.
+      body: JSON.stringify({ phoneNumberId: VAPI_PHONE_NUMBER_ID, customer: { number }, assistant, monitorPlan: { controlEnabled: true } }),
     });
     if (r.status >= 300) {
       const t = await r.text();
       return NextResponse.json({ error: `Vapi error ${r.status}: ${t.slice(0, 200)}` }, { status: 502 });
     }
-    const callId = (await r.json()).id;
-    return NextResponse.json({ provider: "vapi", callId });
+    const j = await r.json();
+    return NextResponse.json({ provider: "vapi", callId: j.id, controlUrl: j.monitor?.controlUrl || "" });
   } catch {
     return NextResponse.json({ provider: "mock", callId: "mock-" + Date.now() });
   }
