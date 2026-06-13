@@ -11,8 +11,10 @@ import { mockPath, plainExplainMock } from "@/lib/mock";
 import {
   CATEGORY_LABEL,
   deriveTags,
+  loadBrain,
   noteRun,
   recommend,
+  saveBrain,
   stats,
   type Category,
 } from "@/lib/brain";
@@ -113,8 +115,10 @@ Reply with only the explanation, no preamble.`;
     };
 
     // 1. read situation signals + what the learning model recommends
+    await loadBrain();
     const tags = deriveTags(intake.situation);
     noteRun();
+    saveBrain();
     const recommended = recommend(tags);
     const recLabels = recommended.map((c: Category) => CATEGORY_LABEL[c]);
 

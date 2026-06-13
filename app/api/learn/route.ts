@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { learn, stats, type Category } from "@/lib/brain";
+import { learn, loadBrain, saveBrain, stats, type Category } from "@/lib/brain";
 
 const VALID: Category[] = [
   "safety", "shelter", "rent", "documents", "benefits",
@@ -7,16 +7,19 @@ const VALID: Category[] = [
 ];
 
 export async function GET() {
+  await loadBrain();
   return NextResponse.json(stats());
 }
 
 export async function POST(req: NextRequest) {
+  await loadBrain();
   const body = await req.json();
   const tags = Array.isArray(body.tags) ? body.tags.map(String) : [];
   const category = String(body.category) as Category;
   const helped = body.helped !== false;
   if (VALID.includes(category) && tags.length) {
     learn(tags, category, helped);
+    saveBrain();
   }
   return NextResponse.json(stats());
 }
