@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AccessibilityToggle from "@/components/AccessibilityToggle";
 
 export const metadata: Metadata = {
   title: "YNorth — Find your way home",
@@ -24,6 +25,7 @@ export default function RootLayout({
         <div className="sky" />
         <div className="northstar" />
         <div style={{ position: "relative", zIndex: 2 }}>{children}</div>
+        <AccessibilityToggle />
       </body>
     </html>
   );

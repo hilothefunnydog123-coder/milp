@@ -116,6 +116,27 @@ input:focus-visible, textarea:focus-visible {
 
 @media (prefers-reduced-motion: reduce) { .northstar { animation: none; } }
 
+/* ---------- accessibility mode ---------- */
+body { font-size: 1rem; }
+html.txt-large { font-size: 20px; }
+html.high-contrast {
+  --ink: #ffffff;
+  --muted: #d7ddee;
+  --line: rgba(255, 255, 255, 0.3);
+}
+html.high-contrast .sky { opacity: 0.5; }
+
+/* ---------- print: a clean, ink-friendly one-pager ---------- */
+@media print {
+  .no-print { display: none !important; }
+  .sky, .northstar { display: none !important; }
+  html, body { background: #fff !important; color: #000 !important; font-size: 12pt; }
+  * { color: #000 !important; box-shadow: none !important; }
+  .glass, .glow-gold, .cert { background: #fff !important; border: 1px solid #ccc !important; }
+  .warm-text, .gradient-text { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+  a { color: #000 !important; text-decoration: underline; }
+}
+
 /* ---------- shelter map (Jarvis-style HUD) ---------- */
 .yn-pin {
   width: 14px; height: 14px; border-radius: 50%;

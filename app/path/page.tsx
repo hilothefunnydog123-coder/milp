@@ -28,7 +28,7 @@ export default function PathPage() {
 
   return (
     <main className="min-h-screen">
-      <nav className="mx-auto flex max-w-2xl items-center justify-between px-6 py-5">
+      <nav className="no-print mx-auto flex max-w-2xl items-center justify-between px-6 py-5">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold">
           <Compass className="h-5 w-5 text-gold" /> Y<span className="warm-text">North</span>
         </Link>
