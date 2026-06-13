@@ -1,3 +1,13 @@
+// ============================================================================
+// Gemini access layer. Two AI capabilities power YNorth:
+//   • callGemini()         — Gemini 2.5 Flash for reasoning/generation: building
+//                            the path, plain-language explainers, call scripts,
+//                            multilingual output, post-call instruction summaries.
+//   • callGeminiGrounded() — the SAME model WITH Google Search grounding so local
+//                            resources are REAL and CITED, never hallucinated.
+// Both degrade gracefully (return "") with no key, so the app always works.
+// ============================================================================
+
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 

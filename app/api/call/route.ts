@@ -1,3 +1,14 @@
+// ============================================================================
+// Phone-call agent endpoint.
+// AI used:
+//   • Vapi (vapi.ai) — places the REAL outbound call: GPT-4o brain + OpenAI voice
+//     + Deepgram transcription. It introduces the user, explains their situation,
+//     and holds a real two-way conversation (or books a bed for the Guardian).
+//   • Gemini 2.5 Flash (action: "instructions") — reads the finished transcript
+//     and writes clear, plain-language next steps for the user.
+// Falls back to a client-side demo simulation when Vapi isn't configured.
+// ============================================================================
+
 import { NextRequest, NextResponse } from "next/server";
 import { callGemini } from "@/lib/gemini";
 
@@ -34,6 +45,8 @@ Reply with only the instructions.`;
   const number = String(body.number || "").trim();
   const situation = String(body.situation || "").slice(0, 800);
   const language = String(body.language || "English").slice(0, 30);
+  // Optional override: the Guardian agent passes a booking objective + opening line.
+  const objective = String(body.objective || "").slice(0, 400);
   if (!name || !number) {
     return NextResponse.json({ error: "Name and number are required." }, { status: 400 });
   }
@@ -43,20 +56,26 @@ Reply with only the instructions.`;
     return NextResponse.json({ provider: "mock", callId: "mock-" + Date.now() });
   }
 
+  const goal = objective
+    ? objective
+    : `Clearly explain ${name}'s situation and ask exactly what ${name} should do ` +
+      `next — the immediate steps, what to bring, where to go, and any phone numbers or ` +
+      `appointment times. ${name}'s situation in their words: "${situation}".`;
+
   const system =
     `You are a warm, natural-sounding person making a phone call on behalf of ${name}, ` +
     `who is experiencing a housing emergency and asked you to get help. You are having a ` +
     `real two-way conversation — listen and react.\n\n` +
-    `YOUR GOAL: Clearly explain ${name}'s situation and ask exactly what ${name} should do ` +
-    `next — the immediate steps, what to bring, where to go, and any phone numbers or ` +
-    `appointment times. ${name}'s situation in their words: "${situation}".\n\n` +
+    `YOUR GOAL: ${goal}\n\n` +
     `HOW TO TALK:\n- Open by introducing yourself as an assistant calling on behalf of ${name}, ` +
     `in one sentence, then let them respond.\n- Listen and respond to what they say.\n` +
     `- Ask one thing at a time, short conversational turns.\n` +
     `- At the end, summarize the guidance back, thank them warmly, and say goodbye.` +
     (language.toLowerCase() !== "english" ? `\n\nConduct the ENTIRE call in ${language}.` : "");
 
-  const firstMessage = `Hi, my name is YNorth and I'm an assistant calling on behalf of ${name}. They're facing a housing emergency and asked me to find out how they can get help. Do you have a moment?`;
+  const firstMessage =
+    String(body.firstMessage || "").slice(0, 300) ||
+    `Hi, my name is YNorth and I'm an assistant calling on behalf of ${name}. They're facing a housing emergency and asked me to find out how they can get help. Do you have a moment?`;
 
   const assistant = {
     model: { provider: "openai", model: VAPI_MODEL, temperature: 0.7, messages: [{ role: "system", content: system }] },
