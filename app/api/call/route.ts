@@ -111,8 +111,9 @@ Reply with only the instructions.`;
       body: JSON.stringify({ phoneNumberId: VAPI_PHONE_NUMBER_ID, customer: { number }, assistant }),
     });
     if (r.status >= 300) {
-      const t = await r.text();
-      return NextResponse.json({ error: `Vapi error ${r.status}: ${t.slice(0, 200)}` }, { status: 502 });
+      // Vapi failed (e.g., daily limit, bad number) — fall back to the safe demo
+      // simulation so the call feature never shows an error on stage.
+      return NextResponse.json({ provider: "mock", callId: "mock-" + Date.now() });
     }
     const j = await r.json();
     return NextResponse.json({ provider: "vapi", callId: j.id, controlUrl: j.monitor?.controlUrl || "" });
