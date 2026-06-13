@@ -1,18 +1,18 @@
 import { notFound } from "next/navigation";
+import { getTest } from "@/lib/store";
 import { getField } from "@/lib/fields";
 import ExamShell from "@/components/ExamShell";
 
-export default async function ExamPage({
+export default async function SharedTestPage({
   params,
-  searchParams,
 }: {
-  params: Promise<{ field: string }>;
-  searchParams: Promise<{ lock?: string; org?: string; title?: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { field: fieldId } = await params;
-  const sp = await searchParams;
-  const field = getField(fieldId);
-  if (!field || !field.live) notFound();
+  const { id } = await params;
+  const test = getTest(id);
+  if (!test) notFound();
+  const field = getField(test.fieldId);
+  if (!field) notFound();
 
   return (
     <ExamShell
@@ -24,9 +24,9 @@ export default async function ExamPage({
         tokenBudget: field.tokenBudget,
         timeLimit: field.timeLimit,
       }}
-      lockedModel={sp.lock ?? null}
-      org={sp.org ?? null}
-      title={sp.title}
+      lockedModel={test.lockedModel}
+      org={test.org}
+      title={test.title}
     />
   );
 }

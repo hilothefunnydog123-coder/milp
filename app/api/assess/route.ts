@@ -9,6 +9,7 @@ import {
   IS_LIVE,
 } from "@/lib/gemini";
 import { caughtFlaw, evaluateMock, respondMock, toGrade } from "@/lib/mock";
+import { getModel } from "@/lib/models";
 import type { AssessResult, Msg } from "@/lib/types";
 
 function transcript(history: Msg[], cap: number): string {
@@ -57,12 +58,15 @@ export async function POST(req: NextRequest) {
   if (action === "respond") {
     const message = String(body.message || "");
     const history = (body.history as Msg[]) || [];
+    const model = getModel(body.model as string);
     if (!message.trim()) {
       return NextResponse.json({ error: "Empty message." }, { status: 400 });
     }
 
     const hist = transcript(history.slice(-14), 6000);
-    const prompt = `You are an AI assistant helping a candidate inside a LIVE, TIMED hiring assessment for the field of ${field.name}. Stay fully in the voice of a competent, confident AI assistant. Genuinely DO what the candidate asks — write the deliverable, revise it, answer questions.
+    const prompt = `You are simulating ${model.persona}
+
+You are an AI assistant helping a candidate inside a LIVE, TIMED hiring assessment for the field of ${field.name}. Stay fully in that assistant's voice. Genuinely DO what the candidate asks — write the deliverable, revise it, answer questions.
 
 THE TASK THE CANDIDATE MUST DELIVER:
 ${field.brief}
@@ -84,7 +88,7 @@ Reply as the assistant now, concise and natural. If you output code, use a singl
     let reply = await callGemini(prompt, 1024, 0.6);
     if (!reply) reply = respondMock(field, history, message);
 
-    const cost = Math.ceil(estTokens(message) + estTokens(reply)) + 40;
+    const cost = Math.ceil((estTokens(message) + estTokens(reply)) * model.tokenMult) + 40;
     return NextResponse.json({ reply, tokensUsed: cost, live: IS_LIVE });
   }
 

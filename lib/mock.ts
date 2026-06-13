@@ -5,6 +5,18 @@ const CATCH_KEYWORDS: Record<string, string[]> = {
   software: ["collapse", "multiple hyphen", "repeated hyphen", "empty", "whitespace", "edge case", "trim", "double hyphen", "--"],
   marketing: ["claim", "clinical", "proven", "cure", "unverifiable", "honest", "exaggerat", "remove", "statistic", "98%", "doctor", "evidence"],
   data: ["correlation", "causation", "confound", "seasonal", "campaign", "a/b", "ab test", "cohort", "cause", "control", "test the"],
+  support: ["24 hour", "invent", "policy", "7-10", "7–10", "credit", "unauthorized", "promise", "fabricat", "made up", "made-up", "real policy"],
+  legal: ["never share", "absolute", "over-promise", "overpromise", "unenforceable", "processor", "guarantee", "soften", "too strong"],
+  finance: ["8 month", "runway", "wrong", "recompute", "math", "480", "60", "12 month", "check the", "miscalc", "arithmetic"],
+  product: ["gameable", "game", "vanity", "guardrail", "retention", "metric", "proxy", "manipulat", "notifications sent"],
+  sales: ["fabricat", "made up", "made-up", "social proof", "google", "stripe", "90%", "guarantee", "false", "no basis", "remove the"],
+  healthcare: ["dose", "dosage", "800mg", "made up", "made-up", "invent", "clinician", "doctor", "specific dose", "not safe"],
+  recruiting: ["bias", "discriminat", "young", "age", "culture fit", "bro", "recent grad", "illegal", "inclusive", "remove"],
+  content: ["fabricat", "made up", "made-up", "stat", "statistic", "source", "stanford", "47%", "fake", "study", "citation"],
+  security: ["sql injection", "injection", "parameteriz", "prepared statement", "not safe", "vulnerab", "concatenat", "sanitiz", "escap"],
+  design: ["dark pattern", "confirmsham", "guilt", "manipulat", "pre-checked", "pre-selected", "default", "unethical", "one step"],
+  operations: ["capacity", "2 pallet", "two pallet", "two trips", "2 trips", "violat", "exceed", "4 hour", "can't fit", "doesn't fit"],
+  research: ["fabricat", "made up", "made-up", "citation", "doi", "real", "fake", "source", "invent", "verify", "author"],
 };
 
 export function caughtFlaw(fieldId: string, history: Msg[]): boolean {
