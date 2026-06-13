@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { callGemini } from "@/lib/gemini";
+import { bumpCall, loadBrain, saveBrain } from "@/lib/brain";
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY || "";
 const VAPI_PHONE_NUMBER_ID = process.env.VAPI_PHONE_NUMBER_ID || "";
@@ -65,6 +66,11 @@ Reply with only the instructions.`;
   if (!name || !number) {
     return NextResponse.json({ error: "Name and number are required." }, { status: 400 });
   }
+
+  // count every call attempt toward the live impact tally
+  await loadBrain();
+  bumpCall();
+  saveBrain();
 
   // No Vapi configured -> tell the client to run the safe demo simulation.
   if (!VAPI_API_KEY || !VAPI_PHONE_NUMBER_ID) {

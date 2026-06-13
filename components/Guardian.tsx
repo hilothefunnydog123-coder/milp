@@ -72,6 +72,11 @@ export default function Guardian({ resources = [], location = "your area" }: { r
     setNote("Call ended. The bed is still open if you change your mind.");
   }
 
+  function reportBooked() {
+    setCallState("booked");
+    fetch("/api/impact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "booked" }) }).catch(() => {});
+  }
+
   // cancel a confirmed reservation
   function cancelReservation() {
     setCallState(""); setBooking(false); setTranscript([]);
@@ -140,7 +145,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
       { speaker: "assistant", text: `Perfect, ${N} will be there before 8. Thank you so much.` },
     ];
     script.forEach((t, i) => timers.current.push(setTimeout(() => setTranscript((p) => [...p, t]), 900 + i * 2100)));
-    timers.current.push(setTimeout(() => setCallState("booked"), 900 + script.length * 2100 + 600));
+    timers.current.push(setTimeout(reportBooked, 900 + script.length * 2100 + 600));
   }
 
   function pollBooking(callId: string) {
@@ -152,7 +157,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
         if (Array.isArray(d.transcript) && d.transcript.length) setTranscript(d.transcript);
         if (d.status === "completed" || Date.now() - started > 180000) {
           if (bookingPoll.current) clearInterval(bookingPoll.current);
-          setCallState("booked");
+          reportBooked();
         }
       } catch { /* keep polling */ }
     }, 2800);
