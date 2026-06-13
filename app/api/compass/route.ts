@@ -107,6 +107,24 @@ Reply with only the explanation, no preamble.`;
     return NextResponse.json({ explanation: reply });
   }
 
+  // ---- "What do I say?" — a calm, ready-to-read script for a call or visit ----
+  if (action === "script") {
+    const title = String(body.title || "").slice(0, 120);
+    const act = String(body.stepAction || "").slice(0, 280);
+    const language = String(body.language || "English").slice(0, 30);
+    const prompt = `Someone experiencing housing insecurity needs to make this call/visit but feels anxious about what to say. Write them a short, calm script they can read aloud, first-person ("Hi, my name is..."), 4-6 simple lines. Include what to ask for and one question to confirm next steps. Warm and confident, no jargon. Write it in ${language}.
+
+THE STEP: ${title}
+WHAT THEY NEED TO DO: ${act}
+
+Reply with ONLY the script lines, no preamble.`;
+    let reply = await callGemini(prompt, 400, 0.5);
+    if (!reply) {
+      reply = `Hi, my name is ___. I'm experiencing a housing emergency and I was hoping you could help me.\n\nI'm trying to: ${act}\n\nCould you tell me what I need to bring, and what the next step is?\n\nThank you so much for your time.`;
+    }
+    return NextResponse.json({ script: reply });
+  }
+
   if (action === "generate") {
     const intake: Intake = {
       situation: String(body.situation || "").slice(0, 1200),
@@ -130,7 +148,10 @@ Reply with only the explanation, no preamble.`;
           .join("\n")
       : "(none found — give the next concrete action without naming an org)";
 
+    const language = String(body.language || "English").slice(0, 30);
     const prompt = `You are a compassionate, expert housing navigator helping someone experiencing housing insecurity. Build a clear, dignified, step-by-step PATH to stable housing. Warm, plain language (6th-grade reading level). Treat them as a capable person, never a case file. Specific and hopeful, never preachy.
+
+WRITE ALL TEXT (summary, every step's title/plain/action, documents) in ${language}.
 
 THEIR SITUATION: ${intake.situation}
 LOCATION: ${intake.location || "(not given)"}
