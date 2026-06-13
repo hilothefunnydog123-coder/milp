@@ -9,6 +9,7 @@ import {
 import { RESOURCES, RESOURCE_KEYS } from "@/lib/resources";
 import { mockPath, plainExplainMock } from "@/lib/mock";
 import {
+  addLanguage,
   CATEGORY_LABEL,
   deriveTags,
   loadBrain,
@@ -149,6 +150,7 @@ Reply with ONLY the script lines, no preamble.`;
       : "(none found — give the next concrete action without naming an org)";
 
     const language = String(body.language || "English").slice(0, 30);
+    addLanguage(language);
     const prompt = `You are a compassionate, expert housing navigator helping someone experiencing housing insecurity. Build a clear, dignified, step-by-step PATH to stable housing. Warm, plain language (6th-grade reading level). Treat them as a capable person, never a case file. Specific and hopeful, never preachy.
 
 WRITE ALL TEXT (summary, every step's title/plain/action, documents) in ${language}.

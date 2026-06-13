@@ -22,6 +22,7 @@ import {
 import AnimatedNumber from "./AnimatedNumber";
 import CallForMe from "./CallForMe";
 import Guardian from "./Guardian";
+import Companion from "./Companion";
 import type { CompassPath } from "@/lib/types";
 
 const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
@@ -285,6 +286,9 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
 
       {/* autonomous agent: keeps watching, books, guides transport */}
       {!readOnly && <Guardian resources={path.localResources} location={path.location} />}
+
+      {/* follow-up companion: gentle check-ins tied to the next step */}
+      {!readOnly && <Companion path={path} />}
 
       {/* documents */}
       {path.documents.length > 0 && (

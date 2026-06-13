@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import { Compass, ArrowRight, Phone } from "lucide-react";
 import { SceneStar, SceneShelter, SceneCommunity, SceneHome } from "./illustrations";
+import ImpactCounter from "./ImpactCounter";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const rise: Variants = {
@@ -65,9 +66,14 @@ export default function Landing() {
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
             The path out of homelessness — made clear, local, and dignified. One step at a time.
           </p>
-          <Link href="/start" className="btn-gold mt-9 inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg">
-            Find your path <ArrowRight className="h-5 w-5" />
-          </Link>
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/start" className="btn-gold inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg">
+              Find your path <ArrowRight className="h-5 w-5" />
+            </Link>
+            <Link href="/start?demo=1" className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-7 py-4 text-base text-ink transition hover:bg-white/5 glass">
+              ▶ See it work in 30 seconds
+            </Link>
+          </div>
         </motion.div>
         <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 2.5 }} className="absolute bottom-8 text-xs uppercase tracking-[0.3em] text-muted">
           scroll
@@ -89,6 +95,9 @@ export default function Landing() {
           </div>
         </section>
       ))}
+
+      {/* live impact counter — the pitch finale */}
+      <ImpactCounter />
 
       {/* final CTA */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">

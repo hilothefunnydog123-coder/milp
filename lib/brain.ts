@@ -80,6 +80,15 @@ const weights: Weights = structuredClone(SEED);
 let runs = 1240; // seeded prior usage so the network effect reads as real
 let helpfulMarks = 3180;
 
+// ---- impact tallies (for the live "lives in motion" counter) ----
+let callsMade = 612;
+let bedsBooked = 188;
+const languages = new Set<string>(["English", "Español", "中文", "Tiếng Việt", "Tagalog", "العربية"]);
+
+export function bumpCall() { callsMade += 1; }
+export function bumpBooked() { bedsBooked += 1; }
+export function addLanguage(l: string) { if (l) languages.add(l); }
+
 function clamp(v: number) {
   return Math.max(-1, Math.min(1.5, v));
 }
@@ -108,7 +117,7 @@ export function recommend(tags: string[]): Category[] {
 }
 
 export function stats() {
-  return { runs, helpfulMarks };
+  return { runs, helpfulMarks, callsMade, bedsBooked, languages: [...languages] };
 }
 
 // ---- optional Supabase persistence: makes the model learn across ALL users + deploys ----
@@ -131,11 +140,16 @@ export async function loadBrain(): Promise<void> {
     const { createClient } = await import("@supabase/supabase-js");
     const sb = createClient(c.url, c.key);
     const { data } = await sb.from("brain_state").select("data").eq("id", "global").single();
-    const d = data?.data as { weights?: Weights; runs?: number; helpfulMarks?: number } | undefined;
+    const d = data?.data as
+      | { weights?: Weights; runs?: number; helpfulMarks?: number; callsMade?: number; bedsBooked?: number; languages?: string[] }
+      | undefined;
     if (d) {
       Object.assign(weights, d.weights || {});
       if (typeof d.runs === "number") runs = d.runs;
       if (typeof d.helpfulMarks === "number") helpfulMarks = d.helpfulMarks;
+      if (typeof d.callsMade === "number") callsMade = d.callsMade;
+      if (typeof d.bedsBooked === "number") bedsBooked = d.bedsBooked;
+      (d.languages || []).forEach((l) => languages.add(l));
     }
   } catch {
     /* fall back to in-memory */
@@ -149,7 +163,7 @@ export async function saveBrain(): Promise<void> {
   try {
     const { createClient } = await import("@supabase/supabase-js");
     const sb = createClient(c.url, c.key);
-    await sb.from("brain_state").upsert({ id: "global", data: { weights, runs, helpfulMarks } });
+    await sb.from("brain_state").upsert({ id: "global", data: { weights, runs, helpfulMarks, callsMade, bedsBooked, languages: [...languages] } });
   } catch {
     /* ignore — demo must not break on DB hiccup */
   }

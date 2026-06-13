@@ -29,6 +29,22 @@ export default function Start() {
   const [advocate, setAdvocate] = useState(false);
   const recRef = useRef<{ stop: () => void } | null>(null);
   const [tick, setTick] = useState(0);
+  const [autoRun, setAutoRun] = useState(false);
+  const ran = useRef(false);
+
+  const SAMPLE = {
+    situation:
+      "I lost my job two months ago, I've been sleeping in my car, and I don't have my ID anymore. My daughter is with me.",
+    location: "San Jose, CA",
+    language: "English",
+  };
+
+  function loadSample() {
+    setSituation(SAMPLE.situation);
+    setLocation(SAMPLE.location);
+    setLanguage(SAMPLE.language);
+    setAutoRun(true);
+  }
 
   useEffect(() => {
     if (!loading) return;
@@ -37,8 +53,21 @@ export default function Start() {
     return () => clearInterval(t);
   }, [loading]);
 
+  // auto-run the sample once its fields are populated (for the one-tap demo)
   useEffect(() => {
-    setAdvocate(new URLSearchParams(window.location.search).get("for") === "advocate");
+    if (autoRun && situation.trim() && !ran.current) {
+      ran.current = true;
+      setAutoRun(false);
+      findPath();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRun, situation]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    setAdvocate(sp.get("for") === "advocate");
+    if (sp.get("demo") === "1") loadSample();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function addChip(c: string) {
@@ -146,7 +175,11 @@ export default function Start() {
             : "Tell us what's going on, in your own words. There are no wrong answers — and you can talk instead of type."}
         </p>
 
-        <div className="glass mt-7 rounded-2xl p-5">
+        <button onClick={loadSample} className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-muted transition hover:border-gold/50 hover:text-ink">
+          ▶ See a live example
+        </button>
+
+        <div className="glass mt-5 rounded-2xl p-5">
           <div className="relative">
             <textarea
               value={situation}
