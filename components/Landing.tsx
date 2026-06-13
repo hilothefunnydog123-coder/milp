@@ -70,7 +70,7 @@ export default function Landing() {
             <Link href="/start" className="btn-gold inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg">
               Find your path <ArrowRight className="h-5 w-5" />
             </Link>
-            <Link href="/start?demo=1" className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-7 py-4 text-base text-ink transition hover:bg-white/5 glass">
+            <Link href="/start?demo=1" className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-7 py-4 text-base text-ink transition hover:bg-black/[0.04] glass">
               ▶ See it work in 30 seconds
             </Link>
           </div>
