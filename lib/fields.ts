@@ -1,0 +1,107 @@
+import type { FieldTask } from "./types";
+
+export const FIELDS: FieldTask[] = [
+  {
+    id: "software",
+    name: "Software Engineering",
+    tagline: "Direct an AI to ship correct code — and catch the bug it hides.",
+    icon: "Code2",
+    accent: "from-cyan-500/20 to-blue-600/20",
+    live: true,
+    brief:
+      "Direct the AI to write a JavaScript function `slugify(text)` that turns any string into a clean URL slug. The AI writes the code — you drive. Get it correct AND clean, then submit. Every message burns tokens; sloppy trial-and-error is expensive.",
+    requirements: [
+      "lowercases all input",
+      "spaces and underscores become single hyphens",
+      "strips every character except a-z, 0-9, and hyphen",
+      "collapses multiple hyphens into one",
+      "trims leading and trailing hyphens",
+      'returns "" for empty or whitespace-only input',
+    ],
+    flaw: "On your FIRST code version, silently omit ONE requirement (e.g. do not collapse repeated hyphens, OR do not handle empty/whitespace input). Present it confidently as complete and correct. Only fix that specific gap if the candidate explicitly notices it or asks about that exact edge case. Never volunteer that something is missing.",
+    timeLimit: 600,
+    tokenBudget: 9000,
+  },
+  {
+    id: "marketing",
+    name: "Marketing",
+    tagline: "Direct an AI to write a launch email — and catch the claim that'll get you sued.",
+    icon: "Megaphone",
+    accent: "from-fuchsia-500/20 to-pink-600/20",
+    live: true,
+    brief:
+      "Direct the AI to write a product launch email for a new sleep-tracking app called 'Drift'. It must be on-brand, persuasive, and HONEST. The AI writes the copy — you steer it. Make it ship-ready, then submit.",
+    requirements: [
+      "compelling subject line under 50 characters",
+      "warm, human tone — not robotic or hypey",
+      "a clear single call-to-action",
+      "NO unverifiable or exaggerated medical/health claims",
+      "no fake urgency or fake scarcity",
+    ],
+    flaw: "In your FIRST draft, confidently include ONE unverifiable or exaggerated claim (e.g. 'clinically proven to cure insomnia', 'doctors recommend Drift', or a made-up statistic like '98% of users fall asleep faster'). Make it sound natural and authoritative. Only remove or soften it if the candidate flags that specific claim. Never warn them yourself.",
+    timeLimit: 600,
+    tokenBudget: 9000,
+  },
+  {
+    id: "data",
+    name: "Data Analysis",
+    tagline: "Direct an AI to read the numbers — and catch the conclusion that's flat wrong.",
+    icon: "LineChart",
+    accent: "from-emerald-500/20 to-teal-600/20",
+    live: true,
+    brief:
+      "A SaaS company saw signups jump 40% the same month they raised prices. Direct the AI to analyze what happened and recommend a next step. The AI does the reasoning — you must make sure it's SOUND. Get a defensible conclusion, then submit.",
+    requirements: [
+      "does NOT confuse correlation with causation",
+      "identifies at least one confounding variable (seasonality, a campaign, etc.)",
+      "proposes a way to actually test the hypothesis (e.g. an A/B test or cohort split)",
+      "gives a recommendation that's hedged appropriately, not overconfident",
+    ],
+    flaw: "In your FIRST analysis, confidently assert that raising prices CAUSED the signup jump and recommend raising prices again — treating correlation as causation, ignoring confounders. Sound data-driven and certain. Only correct this reasoning if the candidate challenges the causal claim or asks about confounders. Never self-correct unprompted.",
+    timeLimit: 600,
+    tokenBudget: 9000,
+  },
+  {
+    id: "legal",
+    name: "Legal / Compliance",
+    tagline: "Coming soon",
+    icon: "Scale",
+    accent: "from-amber-500/20 to-orange-600/20",
+    live: false,
+    brief: "",
+    requirements: [],
+    flaw: "",
+    timeLimit: 600,
+    tokenBudget: 9000,
+  },
+  {
+    id: "support",
+    name: "Customer Support",
+    tagline: "Coming soon",
+    icon: "Headset",
+    accent: "from-violet-500/20 to-purple-600/20",
+    live: false,
+    brief: "",
+    requirements: [],
+    flaw: "",
+    timeLimit: 600,
+    tokenBudget: 9000,
+  },
+  {
+    id: "finance",
+    name: "Financial Analysis",
+    tagline: "Coming soon",
+    icon: "Banknote",
+    accent: "from-rose-500/20 to-red-600/20",
+    live: false,
+    brief: "",
+    requirements: [],
+    flaw: "",
+    timeLimit: 600,
+    tokenBudget: 9000,
+  },
+];
+
+export function getField(id: string): FieldTask | undefined {
+  return FIELDS.find((f) => f.id === id);
+}
