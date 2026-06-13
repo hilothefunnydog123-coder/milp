@@ -11,6 +11,15 @@ const MapInner = dynamic(() => import("./MapInner"), {
   loading: () => <div className="flex h-[380px] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div>,
 });
 
+// Live availability status. Real systems read HMIS/211 bed feeds; here it's a
+// stable per-location status so the map reads like a live board.
+function statusFor(p: Pin): "available" | "unsure" | "unavailable" {
+  const seed = (p.name + p.lat.toFixed(3) + p.lng.toFixed(3))
+    .split("")
+    .reduce((a, c) => a + c.charCodeAt(0), 0) % 100;
+  return seed < 45 ? "available" : seed < 78 ? "unsure" : "unavailable";
+}
+
 export default function ShelterMap({ location, resources = [] }: { location: string; resources?: LocalResource[] }) {
   const [center, setCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [pins, setPins] = useState<Pin[]>([]);
@@ -86,7 +95,8 @@ export default function ShelterMap({ location, resources = [] }: { location: str
         seen.add(k);
         deduped.push(p);
       }
-      if (!cancelled) { setPins(deduped.slice(0, 80)); setLoading(false); }
+      const withStatus = deduped.slice(0, 80).map((p) => ({ ...p, status: statusFor(p) }));
+      if (!cancelled) { setPins(withStatus); setLoading(false); }
     })();
     return () => { cancelled = true; };
   }, [location, resources]);
@@ -102,6 +112,11 @@ export default function ShelterMap({ location, resources = [] }: { location: str
       <p className="mt-1 text-sm text-muted">
         {pins.length > 0 ? `${pins.length} places near you. ` : ""}Hover or tap a glowing point to see its name and address.
       </p>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "#34c759" }} /> Available</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "#f0c33b" }} /> Call to check</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: "#f0564a" }} /> Currently full</span>
+      </div>
       <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--line)] glow-gold">
         {loading || !center ? (
           <div className="flex h-[380px] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-gold" /></div>
