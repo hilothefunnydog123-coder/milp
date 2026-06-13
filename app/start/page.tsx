@@ -4,24 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Compass, ArrowLeft, ArrowRight, Mic, MicOff, Loader2 } from "lucide-react";
+import { Compass, ArrowLeft, ArrowRight, Mic, MicOff, Play, Users, Languages } from "lucide-react";
+import LocationAutocomplete from "@/components/LocationAutocomplete";
 
 const CHIPS = [
-  "I lost my job",
-  "I'm staying in my car",
-  "I'm couch-surfing",
-  "I'm behind on rent",
-  "I'm facing eviction",
-  "I'm fleeing an unsafe home",
-  "I lost my ID",
-  "I'm a veteran",
-  "I have kids with me",
+  "I lost my job", "I'm staying in my car", "I'm couch-surfing", "I'm behind on rent",
+  "I'm facing eviction", "I'm fleeing an unsafe home", "I lost my ID", "I'm a veteran", "I have kids with me",
 ];
 
 export default function Start() {
   const router = useRouter();
   const [situation, setSituation] = useState("");
   const [location, setLocation] = useState("");
+  const [locationPicked, setLocationPicked] = useState(false);
   const [household, setHousehold] = useState("");
   const [language, setLanguage] = useState("English");
   const [listening, setListening] = useState(false);
@@ -32,17 +27,16 @@ export default function Start() {
   const [autoRun, setAutoRun] = useState(false);
   const ran = useRef(false);
 
-  const SAMPLE = {
-    situation:
-      "I lost my job two months ago, I've been sleeping in my car, and I don't have my ID anymore. My daughter is with me.",
-    location: "San Jose, CA",
-    language: "English",
-  };
+  function pickLocation(label: string, lat: number, lng: number) {
+    setLocation(label);
+    setLocationPicked(true);
+    localStorage.setItem("yn_coords", JSON.stringify({ lat, lng }));
+  }
 
   function loadSample() {
-    setSituation(SAMPLE.situation);
-    setLocation(SAMPLE.location);
-    setLanguage(SAMPLE.language);
+    setSituation("I lost my job two months ago, I've been sleeping in my car, and I don't have my ID anymore. My daughter is with me.");
+    pickLocation("San Jose, California, United States", 37.3382, -121.8863);
+    setLanguage("English");
     setAutoRun(true);
   }
 
@@ -53,15 +47,14 @@ export default function Start() {
     return () => clearInterval(t);
   }, [loading]);
 
-  // auto-run the sample once its fields are populated (for the one-tap demo)
   useEffect(() => {
-    if (autoRun && situation.trim() && !ran.current) {
+    if (autoRun && situation.trim() && locationPicked && !ran.current) {
       ran.current = true;
       setAutoRun(false);
       findPath();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoRun, situation]);
+  }, [autoRun, situation, locationPicked]);
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -78,32 +71,21 @@ export default function Start() {
     type SR = { lang: string; continuous: boolean; interimResults: boolean; onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void; onend: () => void; start: () => void; stop: () => void };
     const w = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
     const SpeechRec = w.SpeechRecognition || w.webkitSpeechRecognition;
-    if (!SpeechRec) {
-      alert("Voice input isn't supported in this browser — you can type instead.");
-      return;
-    }
-    if (listening) {
-      recRef.current?.stop();
-      setListening(false);
-      return;
-    }
+    if (!SpeechRec) { alert("Voice input isn't supported in this browser — you can type instead."); return; }
+    if (listening) { recRef.current?.stop(); setListening(false); return; }
     const rec = new SpeechRec();
-    rec.lang = "en-US";
-    rec.continuous = true;
-    rec.interimResults = false;
+    rec.lang = "en-US"; rec.continuous = true; rec.interimResults = false;
     rec.onresult = (e) => {
       let t = "";
       for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + " ";
       setSituation((prev) => (prev ? prev + " " : "") + t.trim());
     };
     rec.onend = () => setListening(false);
-    rec.start();
-    recRef.current = rec;
-    setListening(true);
+    rec.start(); recRef.current = rec; setListening(true);
   }
 
   async function findPath() {
-    if (!situation.trim()) return;
+    if (!situation.trim() || !locationPicked) return;
     setLoading(true);
     try {
       const res = await fetch("/api/compass", {
@@ -124,8 +106,9 @@ export default function Start() {
     }
   }
 
+  // ---------- loading ----------
   if (loading) {
-    const where = location.trim() || "you";
+    const where = location.split(",")[0] || "you";
     const steps = [
       "Reading what you shared…",
       `Searching for real help near ${where}…`,
@@ -140,106 +123,118 @@ export default function Start() {
           <Compass className="h-10 w-10 text-gold" />
         </motion.div>
         <p className="font-display text-2xl">Looking up real help near you</p>
-        <motion.p key={msg} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="h-5 text-muted">
-          {msg}
-        </motion.p>
+        <motion.p key={msg} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="h-5 text-muted">{msg}</motion.p>
         <div className="h-2 w-72 max-w-[80vw] overflow-hidden rounded-full bg-white/10">
-          <motion.div
-            initial={{ width: "0%" }}
-            animate={{ width: "94%" }}
-            transition={{ duration: 22, ease: "easeOut" }}
-            className="h-full rounded-full trail"
-          />
+          <motion.div initial={{ width: "0%" }} animate={{ width: "94%" }} transition={{ duration: 22, ease: "easeOut" }} className="h-full rounded-full trail" />
         </div>
         <p className="max-w-sm text-sm text-muted">
-          This usually takes about <span className="text-ink">15–20 seconds</span> — we&apos;re
-          searching live for real, local resources, not generic advice. Hang tight, it&apos;s worth it.
+          This usually takes about <span className="text-ink">15–20 seconds</span> — we&apos;re searching live for real, local resources. Hang tight, it&apos;s worth it.
         </p>
       </main>
     );
   }
 
+  const canSubmit = situation.trim().length > 0 && locationPicked;
+
+  // ---------- intake ----------
   return (
-    <main className="mx-auto max-w-2xl px-6 py-8">
-      <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-ink">
+    <main className="relative mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-8">
+      <Link href="/" className="inline-flex items-center gap-2 self-start text-sm text-muted transition hover:text-ink">
         <ArrowLeft className="h-4 w-4" /> Back
       </Link>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mt-8">
-        <h1 className="text-4xl leading-tight">
-          {advocate ? "Tell us about the person you're helping." : "Let's start where you are."}
-        </h1>
-        <p className="mt-3 text-muted">
-          {advocate
-            ? "Describe their situation in a few words. There are no wrong answers."
-            : "Tell us what's going on, in your own words. There are no wrong answers — and you can talk instead of type."}
-        </p>
-
-        <button onClick={loadSample} className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-muted transition hover:border-gold/50 hover:text-ink">
-          ▶ See a live example
-        </button>
-
-        <div className="glass mt-5 rounded-2xl p-5">
-          <div className="relative">
-            <textarea
-              value={situation}
-              onChange={(e) => setSituation(e.target.value)}
-              rows={5}
-              placeholder={advocate ? "e.g. They lost their job, are staying in their car, and lost their ID…" : "e.g. I lost my job a month ago, I've been staying in my car, and I don't have my ID anymore…"}
-              className="w-full resize-none bg-transparent text-lg leading-relaxed outline-none placeholder:text-muted/70"
-            />
-            <button
-              onClick={toggleMic}
-              aria-label={listening ? "Stop voice input" : "Start voice input"}
-              className={`absolute bottom-0 right-0 flex h-11 w-11 items-center justify-center rounded-full transition ${
-                listening ? "bg-rose-500/30 text-rose-200" : "bg-white/8 text-ink hover:bg-white/15"
-              }`}
-            >
-              {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </button>
-          </div>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="my-auto py-10">
+        {/* header */}
+        <div className="text-center">
+          <div className="mx-auto mb-5 h-2.5 w-2.5 rounded-full bg-gold" style={{ boxShadow: "0 0 16px 5px rgba(232,184,115,0.7)" }} />
+          <h1 className="text-4xl leading-tight sm:text-5xl">
+            {advocate ? "Tell us about the person you're helping." : "Let's start where you are."}
+          </h1>
+          <p className="mx-auto mt-4 max-w-md text-muted">
+            {advocate
+              ? "Describe their situation in a few words. There are no wrong answers."
+              : "In your own words — type or talk. There are no wrong answers, and your words stay on your device."}
+          </p>
+          <button onClick={loadSample} className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-muted transition hover:border-gold/50 hover:text-ink">
+            <Play className="h-3.5 w-3.5 text-gold" /> See a live example
+          </button>
         </div>
 
-        {listening && <p className="mt-2 text-sm text-gold">Listening… speak naturally, then tap the mic to stop.</p>}
-
-        {/* quick chips */}
-        <div className="mt-5">
-          <p className="text-xs uppercase tracking-wider text-muted">Or tap what fits</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {CHIPS.map((c) => (
-              <button key={c} onClick={() => addChip(c)} className="rounded-full border border-[var(--line)] px-3.5 py-1.5 text-sm text-ink transition hover:border-gold/50 hover:bg-gold/5">
-                {c}
+        {/* form card */}
+        <div className="glass mt-8 space-y-6 rounded-3xl p-6 sm:p-8">
+          {/* situation */}
+          <div>
+            <div className="relative rounded-2xl border border-[var(--line)] bg-white/[0.03] p-4 transition focus-within:border-gold/50">
+              <textarea
+                value={situation}
+                onChange={(e) => setSituation(e.target.value)}
+                rows={5}
+                placeholder={advocate ? "e.g. They lost their job, are staying in their car, and lost their ID…" : "e.g. I lost my job a month ago, I've been staying in my car, and I don't have my ID anymore…"}
+                className="w-full resize-none bg-transparent text-lg leading-relaxed outline-none placeholder:text-muted/60"
+              />
+              <button
+                onClick={toggleMic}
+                aria-label={listening ? "Stop voice input" : "Start voice input"}
+                className={`absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full transition ${listening ? "bg-rose-500/30 text-rose-200" : "bg-white/10 text-ink hover:bg-white/20"}`}
+              >
+                {listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
               </button>
-            ))}
+            </div>
+            {listening && <p className="mt-2 text-sm text-gold">Listening… speak naturally, then tap the mic to stop.</p>}
           </div>
-        </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {/* chips */}
           <div>
-            <label className="text-sm text-muted">Where are you? (city or ZIP)</label>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Milpitas, CA" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
+            <p className="text-xs uppercase tracking-wider text-muted">Or tap what fits</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {CHIPS.map((c) => (
+                <button key={c} onClick={() => addChip(c)} className="rounded-full border border-[var(--line)] px-3.5 py-1.5 text-sm text-ink transition hover:border-gold/50 hover:bg-gold/5">
+                  {c}
+                </button>
+              ))}
+            </div>
           </div>
+
+          <div className="h-px bg-[var(--line)]" />
+
+          {/* location (specific, required) */}
           <div>
-            <label className="text-sm text-muted">Who&apos;s with you? (optional)</label>
-            <input value={household} onChange={(e) => setHousehold(e.target.value)} placeholder="e.g. just me / 2 kids" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
+            <label className="flex items-center gap-1.5 text-sm text-muted">Where are you? <span className="text-gold/80">(pick your exact city)</span></label>
+            <div className="mt-1.5">
+              <LocationAutocomplete value={location} picked={locationPicked} onPick={pickLocation} onType={(t) => { setLocation(t); setLocationPicked(false); }} />
+            </div>
           </div>
-        </div>
 
-        <div className="mt-4">
-          <label className="text-sm text-muted">Show my plan in</label>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60">
-            {["English", "Español", "中文 (Chinese)", "Tiếng Việt (Vietnamese)", "Tagalog", "العربية (Arabic)", "Русский (Russian)", "Français", "Português", "한국어 (Korean)"].map((l) => (
-              <option key={l} value={l} className="bg-[#0a0e17]">{l}</option>
-            ))}
-          </select>
-        </div>
+          {/* household + language */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="flex items-center gap-1.5 text-sm text-muted"><Users className="h-3.5 w-3.5" /> Who&apos;s with you? <span className="text-muted/60">(optional)</span></label>
+              <input value={household} onChange={(e) => setHousehold(e.target.value)} placeholder="just me / 2 kids" className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60" />
+            </div>
+            <div>
+              <label className="flex items-center gap-1.5 text-sm text-muted"><Languages className="h-3.5 w-3.5" /> Show my plan in</label>
+              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60">
+                {["English", "Español", "中文 (Chinese)", "Tiếng Việt (Vietnamese)", "Tagalog", "العربية (Arabic)", "Русский (Russian)", "Français", "Português", "한국어 (Korean)"].map((l) => (
+                  <option key={l} value={l} className="bg-[#0c1322]">{l}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-        <button onClick={findPath} disabled={!situation.trim()} className="btn-gold mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full py-4 text-lg disabled:opacity-40">
-          Show me my path <ArrowRight className="h-5 w-5" />
-        </button>
-        <p className="mt-3 text-center text-xs text-muted">
-          Private by design — your words stay on your device.
-        </p>
+          <motion.button
+            onClick={findPath}
+            disabled={!canSubmit}
+            whileHover={canSubmit ? { scale: 1.01 } : {}}
+            whileTap={canSubmit ? { scale: 0.98 } : {}}
+            className="btn-gold inline-flex w-full items-center justify-center gap-2 rounded-full py-4 text-lg disabled:opacity-40"
+          >
+            Show me my path <ArrowRight className="h-5 w-5" />
+          </motion.button>
+          {!locationPicked && situation.trim() && (
+            <p className="text-center text-xs text-gold/80">Almost there — pick your exact city above so we find the right place.</p>
+          )}
+          <p className="text-center text-xs text-muted">Private by design — your words stay on your device.</p>
+        </div>
       </motion.div>
     </main>
   );

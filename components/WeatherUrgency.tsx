@@ -20,10 +20,19 @@ export default function WeatherUrgency({ location }: { location: string }) {
     let cancelled = false;
     (async () => {
       try {
-        const g = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(location)}&limit=1`).then((r) => r.json());
-        const c = g?.features?.[0]?.geometry?.coordinates;
-        if (!c) return;
-        const [lng, lat] = c;
+        // prefer the exact coordinates of the place the user picked
+        let lat: number, lng: number;
+        const stored = (() => {
+          try { const s = JSON.parse(localStorage.getItem("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
+        })();
+        if (stored) {
+          lat = stored.lat; lng = stored.lng;
+        } else {
+          const g = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(location)}&limit=1`).then((r) => r.json());
+          const c = g?.features?.[0]?.geometry?.coordinates;
+          if (!c) return;
+          lng = c[0]; lat = c[1];
+        }
         const wx = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,precipitation,weather_code&temperature_unit=fahrenheit`
         ).then((r) => r.json());
