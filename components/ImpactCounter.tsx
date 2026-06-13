@@ -11,7 +11,8 @@ export default function ImpactCounter() {
   useEffect(() => {
     fetch("/api/impact").then((r) => r.json()).then(setD).catch(() => {});
   }, []);
-  if (!d) return null;
+  // Honest by design: only show the counter once there's real, earned usage.
+  if (!d || d.paths + d.calls + d.beds === 0) return null;
 
   const stats = [
     { n: d.paths, l: "paths charted home" },

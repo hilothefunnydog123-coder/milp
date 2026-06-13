@@ -77,13 +77,15 @@ const SEED: Weights = {
 
 const LR = 0.08;
 const weights: Weights = structuredClone(SEED);
-let runs = 1240; // seeded prior usage so the network effect reads as real
-let helpfulMarks = 3180;
+// Real counters — start at zero and only ever reflect genuine usage (persisted
+// to Supabase so they accumulate honestly across real sessions). No fabrication.
+let runs = 0;
+let helpfulMarks = 0;
 
 // ---- impact tallies (for the live "lives in motion" counter) ----
-let callsMade = 612;
-let bedsBooked = 188;
-const languages = new Set<string>(["English", "Español", "中文", "Tiếng Việt", "Tagalog", "العربية"]);
+let callsMade = 0;
+let bedsBooked = 0;
+const languages = new Set<string>();
 
 export function bumpCall() { callsMade += 1; }
 export function bumpBooked() { bedsBooked += 1; }

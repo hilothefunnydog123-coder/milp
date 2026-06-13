@@ -156,8 +156,12 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           className="glow-gold mt-6 rounded-2xl p-5"
         >
           <div className="flex items-center gap-2 text-sm font-semibold text-gold">
-            <Brain className="h-4 w-4" /> YNorth has learned from{" "}
-            <span className="text-ink"><AnimatedNumber value={runs} /></span> journeys
+            <Brain className="h-4 w-4" />
+            {runs >= 20 ? (
+              <span>YNorth has learned from <span className="text-ink"><AnimatedNumber value={runs} /></span> journeys</span>
+            ) : (
+              <span>YNorth is learning from every journey — including yours</span>
+            )}
           </div>
           <p className="mt-2 text-sm text-muted">
             People in situations like yours most often found{" "}
