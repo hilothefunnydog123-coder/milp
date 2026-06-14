@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AccessibilityToggle from "@/components/AccessibilityToggle";
 import MotionProvider from "@/components/MotionProvider";
+import PitchWidget from "@/components/PitchWidget";
 
 export const metadata: Metadata = {
   title: "YNorth — Find your way home",
@@ -41,6 +42,7 @@ export default function RootLayout({
         <MotionProvider>
           <div style={{ position: "relative", zIndex: 2 }}>{children}</div>
           <AccessibilityToggle />
+          <PitchWidget />
         </MotionProvider>
       </body>
     </html>
