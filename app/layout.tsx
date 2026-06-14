@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AccessibilityToggle from "@/components/AccessibilityToggle";
 import MotionProvider from "@/components/MotionProvider";
@@ -7,7 +7,20 @@ export const metadata: Metadata = {
   title: "YNorth — Find your way home",
   description:
     "The path out of homelessness is an invisible maze. YNorth turns it into a clear, dignified, step-by-step path you own — pointing you toward stable housing, one step at a time.",
+  openGraph: {
+    title: "YNorth — Find your way home",
+    description: "A compass out of homelessness — researched, called, and walked with you.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "YNorth — Find your way home",
+    description: "A compass out of homelessness — researched, called, and walked with you.",
+  },
+  appleWebApp: { capable: true, title: "YNorth", statusBarStyle: "black-translucent" },
 };
+
+export const viewport: Viewport = { themeColor: "#0a0e17" };
 
 export default function RootLayout({
   children,

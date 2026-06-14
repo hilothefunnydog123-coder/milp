@@ -18,6 +18,7 @@ import {
   Loader2, ShieldCheck, Sparkles, X, Ban,
 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
+import Celebrate from "./Celebrate";
 
 interface NearbyOption { name: string; city?: string; helpsWith?: string; contact?: string }
 interface Turn { speaker: string; text: string }
@@ -52,6 +53,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   const [transcript, setTranscript] = useState<Turn[]>([]);
   const [controlUrl, setControlUrl] = useState("");
   const [note, setNote] = useState("");
+  const [celebrate, setCelebrate] = useState(false);
   const bookingPoll = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // transportation sub-flow
@@ -74,6 +76,8 @@ export default function Guardian({ resources = [], location = "your area" }: { r
 
   function reportBooked() {
     setCallState("booked");
+    setCelebrate(true);
+    setTimeout(() => setCelebrate(false), 2800);
     fetch("/api/impact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "booked" }) }).catch(() => {});
   }
 
@@ -212,6 +216,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   // ---------- ALERT (vacancy found) ----------
   return (
     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="glow-gold mt-6 rounded-3xl p-7">
+      {celebrate && <Celebrate message="A bed is reserved for you" />}
       <div className="flex items-center gap-2 text-sm font-semibold text-gold"><BellRing className="h-4 w-4" /> Vacancy found · live watch</div>
       <div className="mt-3 flex items-start gap-3">
         <BedDouble className="mt-1 h-6 w-6 shrink-0 text-gold" />
