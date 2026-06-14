@@ -1,3 +1,5 @@
+// /api/call/[id] — polls a live Vapi call for its status and transcript so the
+// UI can stream the conversation as it happens.
 import { NextRequest, NextResponse } from "next/server";
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY || "";

@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Landing — the hero/marketing page. Sentimental "north star" theme: the value
+ * proposition, the thesis (YNorth acts, it doesn't just advise), cited problem
+ * stats, a "how it works" section naming the AI stack, a dignity strip, the live
+ * impact counter, and calls-to-action into the intake flow.
+ */
+
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import {

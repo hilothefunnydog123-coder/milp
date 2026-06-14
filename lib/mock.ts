@@ -1,3 +1,6 @@
+// Deterministic fallback used when there is no Gemini key (or it fails): builds a
+// sensible, warm path home from the person's situation so the app always works in
+// a demo, with no external calls.
 import type { CompassPath, CompassStep, Intake } from "./types";
 
 function has(s: string, ...words: string[]) {

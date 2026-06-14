@@ -1,5 +1,8 @@
 "use client";
 
+// Landing "lives in motion" counter. Pulls REAL, earned usage from /api/impact
+// (paths charted, calls made, beds booked, languages served) and stays hidden
+// until there is genuine usage — no fabricated numbers.
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedNumber from "./AnimatedNumber";

@@ -1,3 +1,13 @@
+// ============================================================================
+// /api/compass — the planning brain. Actions:
+//   "generate": builds a tailored, plain-language path home. It first runs a
+//      grounded web search for REAL local resources, then asks Gemini to weave
+//      them into ordered Now/Soon/Later steps; it also records the chosen
+//      language and asks the learning model which kinds of help to prioritise.
+//   "explain":  a plain-language explainer for a step or term (Gemini).
+//   "script":   a calm, ready-to-read phone script for a step (Gemini).
+// Every action degrades to deterministic fallbacks when no Gemini key is set.
+// ============================================================================
 import { NextRequest, NextResponse } from "next/server";
 import {
   callGemini,

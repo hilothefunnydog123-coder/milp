@@ -19,9 +19,9 @@ const ICONS: Record<Availability, L.DivIcon> = {
 const youIcon = icon("yn-pin-you", 22);
 
 const STATUS_LABEL: Record<Availability, string> = {
-  available: "🟢 Available now",
-  unsure: "🟡 Availability unknown — call to check",
-  unavailable: "🔴 Currently full",
+  available: "Available now",
+  unsure: "Availability unknown — call to check",
+  unavailable: "Currently full",
 };
 
 export default function MapInner({ center, pins }: { center: { lat: number; lng: number }; pins: Pin[] }) {

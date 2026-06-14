@@ -1,3 +1,6 @@
+// /api/learn — the feedback endpoint. A "this helped" tap trains the YNorth
+// Brain (an online-learning recommender) on what works for a given situation,
+// so future people in similar situations get better-prioritised guidance.
 import { NextRequest, NextResponse } from "next/server";
 import { learn, loadBrain, saveBrain, stats, type Category } from "@/lib/brain";
 
