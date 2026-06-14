@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * CallForMe — the consent-first "Have YNorth call for me" feature.
+ * With the user's explicit permission, an AI voice agent (Vapi) phones a real
+ * help line on their behalf, introduces them, explains their situation, and
+ * returns plain-language next steps. Falls back to a deterministic demo
+ * simulation if Vapi is unavailable, so it never shows an error on stage.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {

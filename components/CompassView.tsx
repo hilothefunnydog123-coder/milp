@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * CompassView — renders a person's generated plan ("path home"): the warm
+ * summary, the call feature, the learning-model "community wisdom", progress and
+ * steps, the autonomous Guardian agent, follow-up companion check-ins, the
+ * shelter map, a document checklist, real local resources, and a transparent
+ * "how the AI works" panel. Reused (read-only) on the shared/advocate view.
+ */
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {

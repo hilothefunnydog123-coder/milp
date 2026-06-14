@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * ShelterMap — a map of real, nearby help. Geocodes the user's city (Photon/OSM),
+ * pulls many shelters and social-service points from OpenStreetMap (Overpass),
+ * and shows them as color-coded availability pins (green/yellow/red) with
+ * name + address on hover/tap. All browser-side, no API key required.
+ */
+
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { MapPinned, Loader2 } from "lucide-react";

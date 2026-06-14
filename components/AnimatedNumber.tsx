@@ -1,5 +1,7 @@
 "use client";
 
+// Smoothly counts a number up from 0 to `value`. Used for scores and the
+// "lives in motion" impact tallies so figures feel alive instead of static.
 import { useEffect, useState } from "react";
 import { animate } from "framer-motion";
 
