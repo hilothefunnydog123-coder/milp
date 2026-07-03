@@ -1,0 +1,7 @@
+out/
+.work-*/
+*.mp4
+token.json
+client_secret.json
+__pycache__/
+*.pyc

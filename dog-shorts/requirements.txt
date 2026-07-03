@@ -1,0 +1,14 @@
+# Core — required
+Pillow>=10.0            # frame composition
+imageio-ffmpeg>=0.4.9  # bundled static ffmpeg (no system install needed)
+
+# Default soft voice — recommended
+edge-tts>=6.1          # free Microsoft neural TTS, no API key
+
+# Optional alternative voices (install only what you use)
+# gTTS>=2.5            # --voice gtts   (free, more robotic)
+# elevenlabs>=1.0      # --voice eleven (needs ELEVENLABS_API_KEY)
+
+# Optional: auto-upload to YouTube (see upload_youtube.py)
+# google-api-python-client>=2.0
+# google-auth-oauthlib>=1.0
