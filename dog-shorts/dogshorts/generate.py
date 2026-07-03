@@ -30,7 +30,7 @@ DEFAULT_CTAS: list[dict] = [
 class ShortConfig:
     hook: str = "What cute dog are you choosing?"
     num_breeds: int = 4
-    voice: str = "edge"            # edge | espeak | gtts | eleven | silent
+    voice: str = "eleven"          # eleven | edge | espeak | gtts | silent
     intro_seconds: float = 2.8     # minimum on-screen time for the hook card
     breed_seconds: float = 2.6     # minimum on-screen time per breed
     tail_seconds: float = 0.5      # breath of silence after each narration

@@ -50,10 +50,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="Dogs per short (default: 4).")
     p.add_argument("--hook", default="What cute dog are you choosing?",
                    help="Opening spoken question.")
-    p.add_argument("--voice", default="edge",
-                   choices=["edge", "espeak", "gtts", "eleven", "silent"],
-                   help="TTS provider (default: edge, a soft neural voice; "
-                        "espeak works fully offline).")
+    p.add_argument("--voice", default="eleven",
+                   choices=["eleven", "edge", "espeak", "gtts", "silent"],
+                   help="TTS provider (default: eleven, needs ELEVENLABS_API_KEY; "
+                        "edge is free neural; espeak is fully offline).")
     p.add_argument("--source", default="auto",
                    choices=["auto", "dogceo", "manifest"],
                    help="Photo source (default: auto — dog.ceo, then bundled "
@@ -71,18 +71,22 @@ def main(argv: list[str] | None = None) -> int:
 
     cfg = _config_from_args(args)
 
-    if args.count > 1:
-        paths = run_batch(args.count, args.out_dir, cfg, keep_work=args.keep_work)
-        print(f"\n🎬 Made {len(paths)} shorts in {args.out_dir}/")
-        return 0
-
-    work = args.out.parent / f".work-{args.out.stem}"
     try:
-        generate_short(args.out, cfg, work)
-    finally:
-        if not args.keep_work and work.exists():
-            shutil.rmtree(work, ignore_errors=True)
-    return 0
+        if args.count > 1:
+            paths = run_batch(args.count, args.out_dir, cfg, keep_work=args.keep_work)
+            print(f"\n🎬 Made {len(paths)} shorts in {args.out_dir}/")
+            return 0
+
+        work = args.out.parent / f".work-{args.out.stem}"
+        try:
+            generate_short(args.out, cfg, work)
+        finally:
+            if not args.keep_work and work.exists():
+                shutil.rmtree(work, ignore_errors=True)
+        return 0
+    except RuntimeError as exc:
+        print(f"\n✖ {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

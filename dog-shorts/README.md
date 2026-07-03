@@ -24,12 +24,18 @@ stays identical, which is exactly what a repeatable Shorts channel wants.
 cd dog-shorts
 python3 -m pip install -r requirements.txt
 
+# The default voice is ElevenLabs (soft, high quality). Set your key:
+export ELEVENLABS_API_KEY=sk_...
+
 # Make one short → out/short.mp4  (+ out/short.json upload metadata)
 python3 -m dogshorts --out out/short.mp4
 
 # Make 10 unique shorts → out/dogshort-0001.mp4 … 0010.mp4
 python3 -m dogshorts --count 10 --out-dir out
 ```
+
+No ElevenLabs key? Use the free neural voice with `--voice edge`, or the
+fully-offline `--voice espeak`.
 
 Force specific breeds (curated best photo used for each):
 
@@ -87,11 +93,17 @@ pick 4 cute breeds ─► fetch a photo each (dog.ceo) ─► narrate hook + nam
 
 | `--voice` | Quality | Setup |
 |-----------|---------|-------|
-| `edge` | Soft neural (recommended) | free, no key |
-| `espeak` | Robotic but **fully offline** | `pip install espeakng-loader` (no model download) |
+| `eleven` | Highest quality (**default**) | set `ELEVENLABS_API_KEY` |
+| `edge` | Soft neural | free, no key |
+| `espeak` | Robotic but **fully offline** | `espeakng-loader` (no model download) |
 | `gtts` | Robotic but reliable | `pip install gTTS` |
-| `eleven` | Highest quality | `pip install elevenlabs`, set `ELEVENLABS_API_KEY` |
 | `silent` | None (timing only) | used by `--offline` |
+
+**ElevenLabs voice & tuning** — the default voice is *Rachel* (calm/soft). Pick
+another with `DOGSHORTS_ELEVEN_VOICE` (a voice ID *or* a name, e.g. `Sarah`,
+`Lily`, `Alice`). Softness knobs (env vars): `DOGSHORTS_ELEVEN_STABILITY` (0.6),
+`DOGSHORTS_ELEVEN_SPEED` (0.92), `DOGSHORTS_ELEVEN_STYLE` (0.0),
+`DOGSHORTS_ELEVEN_MODEL` (`eleven_multilingual_v2`).
 
 ### Photo sources
 

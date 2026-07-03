@@ -27,8 +27,14 @@ from . import ffbin
 
 # Soft, gentle-sounding defaults per provider.
 SOFT_EDGE_VOICE = os.environ.get("DOGSHORTS_EDGE_VOICE", "en-US-AnaNeural")
-SOFT_ELEVEN_VOICE = os.environ.get("DOGSHORTS_ELEVEN_VOICE", "Rachel")
 SOFT_ESPEAK_VOICE = os.environ.get("DOGSHORTS_ESPEAK_VOICE", "en-us+f3")
+
+# ElevenLabs: default to "Rachel" (calm, soft) by voice ID. You can set
+# DOGSHORTS_ELEVEN_VOICE to another voice ID *or* a voice name (resolved via
+# the API). A few soft options: Rachel 21m00Tcm4TlvDq8ikWAM,
+# Sarah EXAVITQu4vr4xnSDxMaL, Lily pFZP5JQG7iQjIQuC4Bku, Alice Xb7hH8MSUJpSbSDYk0k2.
+SOFT_ELEVEN_VOICE = os.environ.get("DOGSHORTS_ELEVEN_VOICE", "21m00Tcm4TlvDq8ikWAM")
+ELEVEN_MODEL = os.environ.get("DOGSHORTS_ELEVEN_MODEL", "eleven_multilingual_v2")
 
 _MP3 = {"edge", "gtts", "eleven"}
 
@@ -146,25 +152,65 @@ def _gtts(text: str, dest: Path) -> Path:
     return dest
 
 
+def _looks_like_voice_id(value: str) -> bool:
+    # ElevenLabs voice IDs are 20-char alphanumeric tokens with no spaces.
+    return len(value) == 20 and value.isalnum()
+
+
+def _resolve_eleven_voice(client, value: str) -> str:
+    """Return a voice ID for ``value`` (already an ID, or a name to look up)."""
+    if _looks_like_voice_id(value):
+        return value
+    try:
+        result = client.voices.search(search=value)
+        voices = getattr(result, "voices", None) or []
+        for v in voices:
+            if v.name and v.name.lower() == value.lower():
+                return v.voice_id
+        if voices:
+            return voices[0].voice_id
+    except Exception:  # noqa: BLE001 - fall through to treating it as an ID
+        pass
+    return value
+
+
 def _eleven(text: str, dest: Path) -> Path:
     key = os.environ.get("ELEVENLABS_API_KEY")
     if not key:
-        raise RuntimeError("ELEVENLABS_API_KEY is not set for --voice eleven.")
+        raise RuntimeError(
+            "ELEVENLABS_API_KEY is not set. Export your key, e.g.\n"
+            "  export ELEVENLABS_API_KEY=sk_...\n"
+            "then run with --voice eleven."
+        )
     try:
         from elevenlabs.client import ElevenLabs
+        from elevenlabs import VoiceSettings
     except ImportError as exc:
         raise RuntimeError("elevenlabs not installed. `pip install elevenlabs`.") from exc
+
     client = ElevenLabs(api_key=key)
+    voice_id = _resolve_eleven_voice(client, SOFT_ELEVEN_VOICE)
+    # Higher stability + slightly slower speed => calm, soft delivery.
+    settings = VoiceSettings(
+        stability=float(os.environ.get("DOGSHORTS_ELEVEN_STABILITY", "0.6")),
+        similarity_boost=float(os.environ.get("DOGSHORTS_ELEVEN_SIMILARITY", "0.75")),
+        style=float(os.environ.get("DOGSHORTS_ELEVEN_STYLE", "0.0")),
+        speed=float(os.environ.get("DOGSHORTS_ELEVEN_SPEED", "0.92")),
+        use_speaker_boost=True,
+    )
     audio = client.text_to_speech.convert(
-        voice_id=SOFT_ELEVEN_VOICE,
-        model_id="eleven_multilingual_v2",
+        voice_id=voice_id,
+        model_id=ELEVEN_MODEL,
         text=text,
         output_format="mp3_44100_128",
+        voice_settings=settings,
     )
     with open(dest, "wb") as fh:
         for chunk in audio:
             if chunk:
                 fh.write(chunk)
+    if not dest.exists() or dest.stat().st_size == 0:
+        raise RuntimeError(f"ElevenLabs returned no audio for {text!r}")
     return dest
 
 
