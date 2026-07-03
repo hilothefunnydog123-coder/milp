@@ -1,0 +1,75 @@
+name: Dog Short
+
+# Renders a cute-dog-breeds YouTube Short on GitHub's servers (not your computer).
+# Default voice is the free Edge neural voice (no key needed). If you add a repo
+# secret named ELEVENLABS_API_KEY, it automatically upgrades to ElevenLabs.
+#
+# Runs on every push to this branch that touches the tool, and can be run
+# manually from the Actions tab once this workflow reaches the default branch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      breeds:
+        description: "Breed api_paths, in order (comma-separated)"
+        default: "pomeranian,samoyed,shiba,pug"
+      voice:
+        description: "Voice: auto | eleven | edge | espeak"
+        default: "auto"
+  push:
+    branches: ["claude/youtube-shorts-dog-breeds-ed4qtu"]
+    paths:
+      - "dog-shorts/**"
+      - ".github/workflows/dog-short.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dog-short-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r dog-shorts/requirements.txt
+
+      - name: Render the short
+        working-directory: dog-shorts
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          BREEDS: ${{ github.event.inputs.breeds || 'pomeranian,samoyed,shiba,pug' }}
+          VOICE_IN: ${{ github.event.inputs.voice || 'auto' }}
+        run: |
+          # auto => ElevenLabs if a key is present, otherwise free Edge neural.
+          VOICE="$VOICE_IN"
+          if [ "$VOICE" = "auto" ]; then
+            if [ -n "$ELEVENLABS_API_KEY" ]; then VOICE=eleven; else VOICE=edge; fi
+          fi
+          echo "Rendering with voice: $VOICE"
+          python -m dogshorts --voice "$VOICE" --source auto \
+            --include "$BREEDS" --out ../renders/dog-short.mp4
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dog-short
+          path: |
+            renders/dog-short.mp4
+            renders/dog-short.json
+
+      - name: Commit the render back to the branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add renders/dog-short.mp4 renders/dog-short.json
+          git commit -m "render: dog short [skip ci]" || { echo "no changes"; exit 0; }
+          git push
