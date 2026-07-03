@@ -77,6 +77,8 @@ def _edge(text: str, dest: Path, rate: str) -> Path:
             "--voice provider (e.g. espeak, which needs no network)."
         ) from exc
 
+    rate = os.environ.get("DOGSHORTS_EDGE_RATE", rate)
+
     async def _go() -> None:
         communicate = edge_tts.Communicate(text, SOFT_EDGE_VOICE, rate=rate)
         await communicate.save(str(dest))

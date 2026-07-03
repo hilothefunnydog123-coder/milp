@@ -48,6 +48,8 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           BREEDS: ${{ github.event.inputs.breeds || 'pomeranian,samoyed,shiba,pug' }}
           VOICE_IN: ${{ github.event.inputs.voice || 'auto' }}
+          # Tighten toward ~15s: quicker neural pace + short pauses.
+          DOGSHORTS_EDGE_RATE: "+22%"
         run: |
           # auto => ElevenLabs if a key is present, otherwise free Edge neural.
           VOICE="$VOICE_IN"
@@ -55,7 +57,7 @@ jobs:
             if [ -n "$ELEVENLABS_API_KEY" ]; then VOICE=eleven; else VOICE=edge; fi
           fi
           echo "Rendering with voice: $VOICE"
-          python -m dogshorts --voice "$VOICE" --source auto \
+          python -m dogshorts --voice "$VOICE" --source auto --tail 0.15 \
             --include "$BREEDS" --out ../renders/dog-short.mp4
 
       - name: Upload as artifact

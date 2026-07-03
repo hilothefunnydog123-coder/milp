@@ -24,7 +24,7 @@ from .generate import ShortConfig, generate_short
 
 
 def _config_from_args(args) -> ShortConfig:
-    return ShortConfig(
+    cfg = ShortConfig(
         hook=args.hook,
         num_breeds=args.breeds,
         voice=args.voice,
@@ -33,6 +33,9 @@ def _config_from_args(args) -> ShortConfig:
         include=args.include.split(",") if args.include else None,
         seed=args.seed,
     )
+    if args.tail is not None:
+        cfg.tail_seconds = args.tail
+    return cfg
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,6 +51,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="Directory for batch output (used when --count > 1).")
     p.add_argument("--breeds", type=int, default=4,
                    help="Dogs per short (default: 4).")
+    p.add_argument("--tail", type=float, default=None,
+                   help="Silent pause after each narration, seconds (default 0.5). "
+                        "Lower it (e.g. 0.15) for a tighter, faster-cut short.")
     p.add_argument("--hook", default="What cute dog are you choosing?",
                    help="Opening spoken question.")
     p.add_argument("--voice", default="eleven",
