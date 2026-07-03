@@ -19,6 +19,35 @@ from .breeds import Breed
 
 _API = "https://dog.ceo/api/breed/{path}/images/random"
 _UA = {"User-Agent": "dogshorts/1.0 (+https://github.com)"}
+_MANIFEST_PATH = Path(__file__).parent / "assets" / "manifest.json"
+
+
+def _load_manifest() -> dict:
+    try:
+        return json.loads(_MANIFEST_PATH.read_text())
+    except Exception:
+        return {}
+
+
+def _manifest_image(breed: Breed, cache_dir: Path, rng, timeout: float) -> Path | None:
+    """Fetch a real photo from the bundled raw.githubusercontent manifest.
+
+    Used when the live dog.ceo API can't be reached but GitHub raw can.
+    Returns None if the breed isn't in the manifest.
+    """
+    manifest = _load_manifest()
+    files = manifest.get(breed.api_path)
+    if not files:
+        return None
+    base = manifest.get("_base", "").rstrip("/")
+    rel = rng.choice(files) if rng is not None else files[0]
+    url = f"{base}/{rel}"
+    dest = _cache_path(cache_dir, breed, url)
+    if not dest.exists():
+        _download(url, dest, timeout)
+    with Image.open(dest) as im:
+        im.verify()
+    return dest
 
 
 def _cache_path(cache_dir: Path, breed: Breed, url: str) -> Path:
@@ -65,30 +94,53 @@ def fetch_breed_image(
     *,
     timeout: float = 15.0,
     allow_placeholder: bool = False,
+    source: str = "auto",
+    rng=None,
 ) -> Path:
-    """Return a local path to a JPG for ``breed``.
+    """Return a local path to a real JPG for ``breed``.
 
-    Downloads a random dog.ceo photo (cached on disk). If the network is
-    unreachable and ``allow_placeholder`` is true, a drawn placeholder is used
-    instead so the pipeline still produces a video.
+    ``source`` controls where the photo comes from:
+
+    * ``auto``     – try the live dog.ceo API, then the bundled GitHub-raw
+                     manifest, then (if allowed) a placeholder card.
+    * ``dogceo``   – dog.ceo only.
+    * ``manifest`` – bundled raw.githubusercontent manifest only (works where
+                     dog.ceo is blocked but GitHub raw is reachable).
+
+    With ``allow_placeholder`` a drawn stand-in is used if every real source
+    fails, so the pipeline still produces a video (``--offline`` demo mode).
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
-    try:
-        url = _random_image_url(breed, timeout)
-        dest = _cache_path(cache_dir, breed, url)
-        if not dest.exists():
-            _download(url, dest, timeout)
-        # Validate it actually decodes as an image.
-        with Image.open(dest) as im:
-            im.verify()
-        return dest
-    except Exception as exc:  # noqa: BLE001 - network/parse/decoding all fold to fallback
-        if not allow_placeholder:
-            raise RuntimeError(
-                f"Could not fetch an image for {breed.name}: {exc}. "
-                f"Pass allow_placeholder=True (or --offline) to use a stand-in card."
-            ) from exc
+    errors: list[str] = []
+
+    if source in ("auto", "dogceo"):
+        try:
+            url = _random_image_url(breed, timeout)
+            dest = _cache_path(cache_dir, breed, url)
+            if not dest.exists():
+                _download(url, dest, timeout)
+            with Image.open(dest) as im:
+                im.verify()
+            return dest
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"dog.ceo: {exc}")
+
+    if source in ("auto", "manifest"):
+        try:
+            got = _manifest_image(breed, cache_dir, rng, timeout)
+            if got is not None:
+                return got
+            errors.append("manifest: breed not listed")
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"manifest: {exc}")
+
+    if allow_placeholder:
         dest = cache_dir / f"placeholder-{breed.api_path.replace('/', '-')}.jpg"
         if not dest.exists():
             _placeholder(breed, dest)
         return dest
+
+    raise RuntimeError(
+        f"Could not fetch an image for {breed.name} ({'; '.join(errors)}). "
+        f"Try --source manifest, or --offline for a stand-in card."
+    )

@@ -29,6 +29,8 @@ def _config_from_args(args) -> ShortConfig:
         num_breeds=args.breeds,
         voice=args.voice,
         offline=args.offline,
+        source=args.source,
+        include=args.include.split(",") if args.include else None,
         seed=args.seed,
     )
 
@@ -49,8 +51,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--hook", default="What cute dog are you choosing?",
                    help="Opening spoken question.")
     p.add_argument("--voice", default="edge",
-                   choices=["edge", "gtts", "eleven", "silent"],
-                   help="TTS provider (default: edge, a soft neural voice).")
+                   choices=["edge", "espeak", "gtts", "eleven", "silent"],
+                   help="TTS provider (default: edge, a soft neural voice; "
+                        "espeak works fully offline).")
+    p.add_argument("--source", default="auto",
+                   choices=["auto", "dogceo", "manifest"],
+                   help="Photo source (default: auto — dog.ceo, then bundled "
+                        "GitHub-raw manifest).")
+    p.add_argument("--include", default=None,
+                   help="Force specific breeds by api_path, comma-separated and "
+                        "in order (e.g. 'pomeranian,samoyed,shiba,pug').")
     p.add_argument("--offline", action="store_true",
                    help="Placeholder art + silent narration; no network needed.")
     p.add_argument("--seed", type=int, default=None,

@@ -6,7 +6,9 @@ again**. Every video follows one template:
 1. A soft voice asks **"What cute dog are you choosing?"** over a title card.
 2. Then, one at a time, **4 cute dog breeds** — each a full-screen photo with
    the breed name spoken in a soft voice and shown as a big caption (`1/4`,
-   `2/4`, …).
+   `2/4`, …), plus a **per-dog call-to-action**:
+   - dog 1 → **Subscribe** · dog 2 → **Like** · dog 3 → **Comment** ·
+     dog 4 → **do all three** (spoken and shown as a colored chip).
 3. Total length **~15 seconds**, vertical **1080×1920** — ready for Shorts.
 
 Only the four breeds (and the title) change from video to video; the format
@@ -29,8 +31,21 @@ python3 -m dogshorts --out out/short.mp4
 python3 -m dogshorts --count 10 --out-dir out
 ```
 
-No network / just want to see the format? Use the offline demo (placeholder
-art + silent narration, needs nothing but Pillow + ffmpeg):
+Force specific breeds (curated best photo used for each):
+
+```bash
+python3 -m dogshorts --include pomeranian,samoyed,shiba,pug --out out/short.mp4
+```
+
+Fully offline with real speech (no cloud, no API key) — bundled espeak voice
+plus the built-in real-photo manifest:
+
+```bash
+python3 -m dogshorts --voice espeak --source manifest \
+  --include pomeranian,samoyed,shiba,pug --out out/short.mp4
+```
+
+Just want to see the format with no network at all? Placeholder art + silence:
 
 ```bash
 python3 -m dogshorts --offline --out out/demo.mp4
@@ -62,7 +77,9 @@ pick 4 cute breeds ─► fetch a photo each (dog.ceo) ─► narrate hook + nam
 | `--out-dir DIR` | `out` | Batch output directory |
 | `--breeds N` | `4` | Dogs per short |
 | `--hook TEXT` | `"What cute dog are you choosing?"` | Opening spoken line |
-| `--voice` | `edge` | `edge` · `gtts` · `eleven` · `silent` |
+| `--voice` | `edge` | `edge` · `espeak` · `gtts` · `eleven` · `silent` |
+| `--source` | `auto` | Photo source: `auto` · `dogceo` · `manifest` |
+| `--include LIST` | random | Force breeds by api_path, in order (comma-separated) |
 | `--offline` | off | Placeholder art + silence, no network |
 | `--seed N` | random | Reproducible breed pick |
 
@@ -71,9 +88,25 @@ pick 4 cute breeds ─► fetch a photo each (dog.ceo) ─► narrate hook + nam
 | `--voice` | Quality | Setup |
 |-----------|---------|-------|
 | `edge` | Soft neural (recommended) | free, no key |
+| `espeak` | Robotic but **fully offline** | `pip install espeakng-loader` (no model download) |
 | `gtts` | Robotic but reliable | `pip install gTTS` |
 | `eleven` | Highest quality | `pip install elevenlabs`, set `ELEVENLABS_API_KEY` |
 | `silent` | None (timing only) | used by `--offline` |
+
+### Photo sources
+
+`--source auto` (default) tries the live [dog.ceo](https://dog.ceo) API first,
+then falls back to a bundled manifest of real photos served from
+`raw.githubusercontent.com` (handy in locked-down networks where dog.ceo is
+blocked but GitHub raw is reachable). `--source manifest` uses only that
+manifest; `--source dogceo` uses only the live API.
+
+### Call-to-actions
+
+Each dog carries a CTA (spoken + shown as a colored chip). The default cycle is
+Subscribe → Like → Comment → all-three; the last dog always asks for everything.
+Edit `DEFAULT_CTAS` in [`dogshorts/generate.py`](dogshorts/generate.py) to change
+the wording, colors, or order.
 
 Pick a different Edge voice with `DOGSHORTS_EDGE_VOICE`, e.g.
 `en-GB-SoniaNeural`, `en-US-JennyNeural`. Full list: `edge-tts --list-voices`.

@@ -5,6 +5,9 @@ imageio-ffmpeg>=0.4.9  # bundled static ffmpeg (no system install needed)
 # Default soft voice — recommended
 edge-tts>=6.1          # free Microsoft neural TTS, no API key
 
+# Fully-offline voice (--voice espeak): no network, no model download
+espeakng-loader>=0.2   # bundles the espeak-ng library + data
+
 # Optional alternative voices (install only what you use)
 # gTTS>=2.5            # --voice gtts   (free, more robotic)
 # elevenlabs>=1.0      # --voice eleven (needs ELEVENLABS_API_KEY)

@@ -82,12 +82,25 @@ def _counter_pill(draw, index: int, total: int) -> None:
     draw.text((x1 + pad_x, y1 + pad_y - 4), txt, font=font, fill=(255, 255, 255))
 
 
+def _cta_chip(draw, label: str, color: tuple[int, int, int], cy: int) -> None:
+    """A bold colored call-to-action pill (SUBSCRIBE / LIKE / …) centered at cy."""
+    font = _font(58)
+    tw = draw.textlength(label, font=font)
+    pad_x, pad_y = 46, 26
+    w, h = tw + pad_x * 2, 58 + pad_y * 2
+    x1, y1 = W // 2 - w // 2, cy - h // 2
+    draw.rounded_rectangle([x1, y1, x1 + w, y1 + h], radius=h // 2,
+                           fill=(*color, 255))
+    draw.text((x1 + pad_x, y1 + pad_y - 6), label, font=font, fill=(255, 255, 255))
+
+
 def render_breed_frame(photo_path: Path, name: str, index: int, total: int,
-                       dest: Path) -> Path:
-    """Full-bleed dog photo + breed-name caption + counter."""
+                       dest: Path, *, cta_label: str | None = None,
+                       cta_color: tuple[int, int, int] = (230, 33, 42)) -> Path:
+    """Full-bleed dog photo + breed-name caption + counter + optional CTA chip."""
     with Image.open(photo_path) as raw:
         frame = _cover(raw, W, H)
-    _bottom_scrim(frame)
+    _bottom_scrim(frame, start=0.42, strength=210)
     draw = ImageDraw.Draw(frame, "RGBA")
 
     font = _font(120)
@@ -96,7 +109,10 @@ def render_breed_frame(photo_path: Path, name: str, index: int, total: int,
     while len(lines) > 2 and font.size > 70:
         font = _font(font.size - 10)
         lines = _wrap(draw, name, font, int(W * 0.86))
-    _draw_centered(draw, lines, font, cy=int(H * 0.82), line_h=int(font.size * 1.12))
+    _draw_centered(draw, lines, font, cy=int(H * 0.80), line_h=int(font.size * 1.12))
+
+    if cta_label:
+        _cta_chip(draw, cta_label, cta_color, cy=int(H * 0.90))
 
     _counter_pill(draw, index, total)
     dest.parent.mkdir(parents=True, exist_ok=True)

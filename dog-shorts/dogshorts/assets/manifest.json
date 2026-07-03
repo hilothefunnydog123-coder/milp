@@ -1,0 +1,24 @@
+{
+  "_comment": "Verified real dog photos on raw.githubusercontent.com (jigsawpieces/dog-api-images, the source repo behind dog.ceo). Used as a fallback image source when the live dog.ceo API is unreachable. Keyed by breed api_path.",
+  "_base": "https://raw.githubusercontent.com/jigsawpieces/dog-api-images/master",
+  "pomeranian": [
+    "pomeranian/n02112018_10129.jpg",
+    "pomeranian/n02112018_10158.jpg",
+    "pomeranian/n02112018_10243.jpg"
+  ],
+  "samoyed": [
+    "samoyed/n02111889_10084.jpg",
+    "samoyed/n02111889_10206.jpg",
+    "samoyed/n02111889_10059.jpg"
+  ],
+  "shiba": [
+    "shiba/shiba-10.jpg",
+    "shiba/shiba-1.jpg",
+    "shiba/shiba-11.jpg"
+  ],
+  "pug": [
+    "pug/Alf.jpg",
+    "pug/IMG_0233.jpg",
+    "pug/IMG_0226.jpg"
+  ]
+}
