@@ -1,0 +1,20 @@
+{
+  "name": "ratelimit-kit",
+  "version": "0.1.0",
+  "description": "Token bucket, sliding window log & fixed window rate limiters in one zero-dependency TypeScript library",
+  "keywords": ["rate-limit", "rate-limiter", "token-bucket", "sliding-window", "throttle", "typescript"],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pathfinding Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🧭 Pathfinding Visualizer</h1>
+    <div class="controls">
+      <select id="algorithm" title="Algorithm">
+        <option value="astar">A* Search</option>
+        <option value="dijkstra">Dijkstra</option>
+        <option value="bfs">Breadth-First Search</option>
+        <option value="greedy">Greedy Best-First</option>
+      </select>
+      <select id="speed" title="Animation speed">
+        <option value="1">Slow</option>
+        <option value="3" selected>Normal</option>
+        <option value="10">Fast</option>
+      </select>
+      <button id="run">▶ Visualize</button>
+      <button id="maze">Random Maze</button>
+      <button id="clearPath">Clear Path</button>
+      <button id="reset">Reset Board</button>
+    </div>
+    <p class="hint">
+      Drag on the grid to draw walls. Drag the
+      <span class="start">green</span> start and <span class="end">red</span> end nodes to move them.
+    </p>
+    <p id="stats"></p>
+  </header>
+  <main>
+    <canvas id="grid"></canvas>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gitglance"
+version = "0.1.0"
+description = "Beautiful git analytics in your terminal — punchcards, streaks, top files and author leaderboards. Zero dependencies."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+[project.scripts]
+gitglance = "gitglance:main"
+
+[tool.setuptools]
+py-modules = ["gitglance"]
