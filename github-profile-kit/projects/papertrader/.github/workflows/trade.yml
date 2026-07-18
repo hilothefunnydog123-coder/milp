@@ -1,0 +1,55 @@
+# Runs one trading cycle every US market morning and commits the updated
+# state + P&L report back to the repo. Free scheduling via GitHub Actions.
+#
+# Setup (one time):
+#   1. Get free paper-trading keys at https://app.alpaca.markets
+#   2. Repo Settings -> Secrets and variables -> Actions -> add:
+#        APCA_API_KEY_ID, APCA_API_SECRET_KEY
+#   3. Enable GitHub Pages (main branch, /docs) to publish the live report.
+#
+# Without secrets the workflow still works in local-simulation mode.
+name: daily-trade
+
+on:
+  schedule:
+    - cron: "40 14 * * 1-5" # ~10:40 ET during DST, ~09:40 ET in winter
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install papertrader
+        run: pip install .
+
+      - name: Run trading cycle
+        env:
+          APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
+          APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
+        run: |
+          if [ -n "$APCA_API_KEY_ID" ]; then
+            papertrader run --symbol SPY --strategy sma --live
+          else
+            echo "No Alpaca secrets configured — running local simulation."
+            papertrader run --symbol SPY --strategy sma
+          fi
+
+      - name: Render report
+        run: papertrader report --out docs/report.html
+
+      - name: Commit state and report
+        run: |
+          git config user.name "papertrader-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state docs/report.html
+          git diff --cached --quiet || git commit -m "papertrader: cycle $(date -u +%Y-%m-%d)"
+          git push

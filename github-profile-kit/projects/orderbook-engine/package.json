@@ -1,0 +1,30 @@
+{
+  "name": "orderbook-engine",
+  "version": "0.1.0",
+  "description": "A limit order book with price-time priority matching — limit/market orders, partial fills, cancels, depth snapshots. Zero dependencies, fully tested.",
+  "keywords": [
+    "orderbook",
+    "matching-engine",
+    "limit-order-book",
+    "trading",
+    "market-microstructure",
+    "typescript"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "bench": "tsc && node dist/bench.js"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

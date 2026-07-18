@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "papertrader"
+version = "0.1.0"
+description = "A verifiable paper-trading bot: daily signal -> target position -> order. Local simulation or Alpaca paper account, scheduled for free with GitHub Actions. Zero dependencies."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+papertrader = "papertrader.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["papertrader*"]
