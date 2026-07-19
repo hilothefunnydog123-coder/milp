@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantlang"
+version = "0.1.0"
+description = "A tiny programming language for trading strategies — hand-written lexer, recursive-descent parser, compile-time validation with did-you-mean diagnostics, and an interpreter that compiles onto the quantsim backtesting engine"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = ["numpy>=1.23"]
+
+[project.optional-dependencies]
+backtest = ["quantsim @ git+https://github.com/hilothefunnydog123-coder/quantsim.git"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+quantlang = "quantlang.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["quantlang*"]
