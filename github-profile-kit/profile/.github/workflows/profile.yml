@@ -1,0 +1,44 @@
+# Regenerates the animated banner and the strategy tracker every morning,
+# then commits them back — so the profile is never static.
+name: profile
+
+on:
+  schedule:
+    - cron: "17 13 * * *" # ~daily; offset off the hour so it isn't queued
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - assets/gen_banner.py
+      - assets/gen_tracker.py
+      - .github/workflows/profile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install quantsim
+        run: pip install "git+https://github.com/hilothefunnydog123-coder/quantsim.git"
+
+      - name: Regenerate banner
+        run: python assets/gen_banner.py
+
+      - name: Update strategy tracker (real SPY, falls back to sample)
+        run: python assets/gen_tracker.py
+
+      - name: Commit if changed
+        run: |
+          git config user.name "hilothefunnydog123-coder"
+          git config user.email "229661712+hilothefunnydog123-coder@users.noreply.github.com"
+          git add assets/banner.svg assets/equity.svg README.md
+          git diff --cached --quiet || git commit -m "chore: daily profile refresh"
+          git push
