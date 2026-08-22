@@ -283,6 +283,123 @@ from someone with no reason to withhold it, in the same email as your ask.
 
 ---
 
+## The contact sheet — exactly where to go
+
+Verify anything marked *(inferred)* before you send. A bounced email or a
+wrong name costs you the first impression.
+
+### Step 1 — sign up as a nonprofit (do this first, it runs in the background)
+
+**HCB, by Hack Club** — a fiscal sponsorship platform that puts YNorth under
+The Hack Foundation's 501(c)(3). Built for teen-led projects.
+
+- **Apply:** https://hackclub.com/fiscal-sponsorship
+- **Sign up:** https://hcb.hackclub.com/users/auth?signup=true
+- **Cost:** no startup cost; 7% on donations received. If you raise nothing,
+  you pay nothing.
+- **Eligibility:** effectively open — not for religious or political orgs.
+- **Speed:** you hear back within about one weekday, then a short
+  get-to-know-you Zoom call.
+
+This is the whole reason to do it first: within roughly a week you can
+truthfully write *"YNorth is a nonprofit project fiscally sponsored by The
+Hack Foundation, a 501(c)(3)"* in the first line of your first library email.
+That sentence removes the "is this a startup harvesting vulnerable users?"
+objection before anyone raises it.
+
+Alternatives if HCB isn't a fit: **Social Good Fund**, **Community
+Initiatives**, **Silicon Valley Community Foundation** — general-purpose
+sponsors, typically 5–10%, slower and more paperwork.
+
+### Step 2 — the three branches to email
+
+Start here. These are the highest-need SCCLD branches and each manager can say
+yes alone.
+
+**Milpitas Library** — your home branch, lead with this one
+- 160 N. Main St., Milpitas, CA 95035 · (408) 262-1171
+- **Milpitas_Manager@lib.sccgov.org**
+- Community Librarian: Kelly McKean *(verify before using a name)*
+- https://sccld.org/milpitas-library/
+
+**Gilroy Library** — highest need, south county
+- 350 W. Sixth St., Gilroy, CA 95020 · (408) 842-8207
+- `Gilroy_Manager@lib.sccgov.org` *(inferred from the pattern — verify)*
+- https://sccld.org/gilroy-library/
+- **https://sccld.org/gilroy-library/community/** ← read this first
+
+**Morgan Hill Library** — south county
+- 660 W. Main Ave., Morgan Hill, CA 95037 · (408) 779-3196
+- `MorganHill_Manager@lib.sccgov.org` *(inferred — verify)*
+- https://sccld.org/morgan-hill-library/
+
+> **The email pattern.** SCCLD appears to use role-based branch inboxes of the
+> form `Branch_Manager@lib.sccgov.org`. Milpitas is confirmed; the rest follow
+> the pattern but **confirm each one** at
+> **https://sccld.org/community-library-managers/**, which lists the managers
+> by name. Role inboxes are the right thing to email — they're published for
+> exactly this — but get the manager's name from that page and open with it.
+
+> **Branches have their own community resources pages.** Gilroy's is at
+> `/gilroy-library/community/`. That is a *branch-level* surface, which almost
+> certainly means a *branch-level* decision — a much easier first yes than the
+> district-wide page. Ask for the branch page first, then use it as proof when
+> you go district-wide.
+
+Don't blast all seven branches with one template. Send three, personalized,
+and mention something specific about that branch.
+
+### Step 3 — the district (only after you have branch yeses)
+
+**SCCLD Services & Support Center (HQ)**
+- 1370 Dell Ave., Campbell, CA · (408) 293-2326
+- County Librarian: **Jennifer Weeks**
+- https://sccld.org/administration/ · https://sccld.org/locations/hq/
+
+**Ask a Librarian** — https://sccld.org/ask-a-librarian/ · reference line
+(408) 540-3947. A real monitored channel. Good place to burn the *"who owns
+the Community Resources page and what does it take to add a link?"* question
+without spending your one good email to a manager on it.
+
+**JPA Board meetings + agendas** — https://sccld.org/jpa/. Meets at least four
+times a year; agendas post in advance. This is where public comment happens.
+
+**SCCLD Foundation** — https://www.sccldf.org/ — a separate 501(c)(3) with its
+own board of directors. Funds things staff want but can't buy.
+
+**Friends of the Library**, per branch — e.g. Friends of the Gilroy Library at
+https://friendsofgilroylibrary.org/contact-us/. Small, local, volunteer-run,
+and genuinely influential with branch staff. An easy early ally.
+
+### Step 4 — county allies (parallel, and worth more than you think)
+
+**Office of Supportive Housing (County of Santa Clara)**
+- https://osh.santaclaracounty.gov/ · MyConnectSV: https://osh.sccgov.org/myconnectsv
+- **Read the MyConnectSV page before any library meeting.** You will be asked
+  how YNorth relates to it, and "I've used it, here's how we complement it"
+  is a completely different answer from "I haven't seen it."
+
+**Destination: Home** — https://destinationhomesv.org/ · Here4You Shelter
+Hotline **(408) 385-2400**, 9am–7pm. The backbone housing nonprofit in this
+county. An endorsement here is worth more than any single library yes.
+
+**SJPL Social Work in the Library** — https://www.sjpl.org/social-work/. Not
+SCCLD, but the closest thing in the county to your actual user. They will give
+you the most honest feedback you will get from anyone. Ask for 20 minutes of
+critique, not for a pilot — you'll get a faster yes and better information.
+
+### This week, in order
+
+1. Submit the HCB application. *(15 minutes)*
+2. Read the MyConnectSV page and the Gilroy branch community resources page.
+3. Fix the `localStorage` leak, ship `/for-libraries`, get a real domain.
+4. Call every phone number in your Santa Clara County resource list.
+5. Get the manager names off `/community-library-managers/`.
+6. Email Milpitas. Then Gilroy and Morgan Hill, personalized.
+7. Email Destination: Home and SJPL Social Work in the Library in parallel.
+
+---
+
 ## Do you need to be a nonprofit?
 
 **To get a bookmark or a resource listing: no.** To get a district-wide
