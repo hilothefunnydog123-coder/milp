@@ -68,6 +68,221 @@ a replacement for.
 
 ---
 
+## Pitching SCCLD, the district (the multi-city one)
+
+SCCLD is the biggest prize in the county for you and the pitch is genuinely
+different from a single-library pitch. Read this whole section before emailing.
+
+### What it actually is
+
+A **Joint Powers Authority** — a shared agency nine cities and the County
+created together, not a department of any one city.
+
+- **Members:** Campbell, Cupertino, Gilroy, Los Altos, Los Altos Hills,
+  Milpitas, Monte Sereno, Morgan Hill, Saratoga. *(Los Gatos is **not** a
+  member — it runs its own independent Town library. So do Sunnyvale,
+  Mountain View, Palo Alto, and Santa Clara city. Don't waste an email.)*
+- **Facilities:** seven community libraries, a branch in Los Altos, a central
+  service center in Campbell, a virtual library, **two bookmobiles**, and an
+  outreach program.
+- **JPA Board:** one city council representative from each of the nine
+  jurisdictions plus two County Supervisors. It sets policy and meets a
+  **minimum of four times a year**.
+- **Executive:** the County Librarian, **Jennifer Weeks** — the district's
+  eighth. She is the person a district-wide yes ultimately comes from.
+- **Branch level:** a **Community Library Manager** at each location. SCCLD
+  publishes them by name.
+- **Money on the side:** the SCCLD Foundation (a separate 501(c)(3) with its
+  own board) plus per-branch Friends of the Library groups.
+
+### Why a district changes the math
+
+A district is **one shared website over decentralized branches**, and that
+cuts both ways.
+
+**In your favor:** the Community Resources page lives at the district level.
+One edit puts YNorth in front of all seven libraries, the Los Altos branch,
+both bookmobiles, and the virtual library simultaneously. There is no
+single-branch pitch anywhere in the county with that leverage.
+
+**Against you:** that also means the decision moves out of a branch manager's
+hands and up to HQ in Campbell — and a shared web page is often owned by a
+communications team, not by librarians. So ask early, in plain words: *"Who
+owns the Community Resources page, and what does it take to add something to
+it?"* Ask it in your first email. The answer tells you exactly who you are
+actually pitching, and almost nobody thinks to ask.
+
+### The two-track play
+
+Running only one track fails. Bottom-up alone gets you three flyers.
+Top-down alone gets you "who are you?" Run both, in this order.
+
+**Track A — earn local yeses first.** Email the Community Library Managers at
+**Milpitas, Gilroy, and Morgan Hill**. Ask for the small thing: a QR flyer at
+the desk, a mention in the staff resource binder, a link on that branch's
+programs page. These are decisions a manager makes alone. You want two or
+three of them live and a photo of a flyer on a real desk.
+
+**Track B — convert traction into a district decision.** *Then* go to the
+County Librarian's office, and lead with the evidence, not the idea:
+
+> "Three of your community librarians are already handing this to patrons at
+> Milpitas, Gilroy, and Morgan Hill. I'd like to ask what it would take to add
+> it to the district's Community Resources page so the other branches and the
+> bookmobiles have it too."
+
+That is a completely different email from "hi, I built an app." One is asking
+for permission; the other is reporting that her own staff already validated
+you and asking her to standardize it. Institutions say yes to the second one.
+
+### Your single best card: the Mental Health Access precedent
+
+SCCLD has already done exactly the partnership you are proposing — the shape,
+the population, the whole thing. They partnered with the **County Behavioral
+Health Services Department**, **NAMI Santa Clara County**, and **Bay Area
+Legal Aid** on a Mental Health Access event series: a 30-minute presentation
+teaching residents how to recognize a need, what their rights are, the steps
+to access care, and what to do when they hit a wall.
+
+County Librarian Jennifer Weeks, on why they did it: **stigma, high costs and
+red tape have limited people's ability to access mental health services**, and
+**"the library is a trusted information source and meeting place for members
+of the public to learn about available mental health services."**
+
+Read that back slowly. *Red tape limiting access to services that already
+exist* is YNorth's entire thesis, stated by the person you are pitching, about
+her own library district. You are not asking her to believe something new. You
+are asking her to apply a belief she has already acted on to housing instead
+of mental health.
+
+So pitch it as exactly that:
+
+> "YNorth is the housing version of your Mental Health Access series — same
+> problem, same trusted-place model, except it works at any hour a branch is
+> open rather than only on event nights, and a patron walks out holding their
+> own plan."
+
+Also worth knowing: SCCLD runs **Services for the Incarcerated**, and Gilroy
+runs **Gilroy Rise Up** for at-risk youth and their families. This is a
+district that already builds programs for people in crisis. You are asking to
+join a pattern, not to start one.
+
+### The demographic trap — do not walk into it
+
+SCCLD spans some of the wealthiest zip codes in the United States (Los Altos
+Hills, Saratoga, Cupertino) and working-class, heavily Spanish-speaking south
+county (Gilroy, Morgan Hill) in the same agency. A pitch that implies "your
+patrons are homeless" lands badly in Los Altos and reads as naive everywhere.
+
+Frame the district case in three moves instead:
+
+1. **Need concentrates in south county and Milpitas — say so plainly.** Gilroy
+   and Morgan Hill are far from where San José's services cluster. There is no
+   walk-in office down the street. *Navigation matters more, not less, the
+   further you are from the services* — that is the strongest single argument
+   you have for this district specifically, and it is the opposite of what
+   they expect a student to say.
+2. **Precarity is not the same as visible homelessness.** Rent burden, eviction
+   notices, doubled-up families, and a laid-off parent one month from trouble
+   exist in every one of the nine cities, Cupertino included.
+3. **Wealthy patrons are helpers, not just clients.** Someone in Saratoga
+   looking for help for an adult child, an aging parent, or a friend is a
+   real, common library reference question — and they don't know where to
+   start either. YNorth serves the helper as well as the person.
+
+Then close it: **it costs the district nothing to offer everywhere, so scope
+it to need without excluding anyone.**
+
+### Three asks nobody else will make
+
+Specificity is what makes a pitch memorable to people who hear generic ones
+constantly. Put at least one of these in writing:
+
+- **The bookmobiles.** Two units plus an outreach program, reaching people who
+  cannot get to a branch — which correlates almost perfectly with the people
+  who most need YNorth. A laminated QR card on a bookmobile is nearly free and
+  no one has ever pitched them for it.
+- **South county first.** Volunteer to pilot at Gilroy or Morgan Hill rather
+  than asking for the whole district. Offering to start where it's hardest
+  reads as serious.
+- **Reentry.** Services for the Incarcerated touches people whose single
+  largest post-release barrier is housing. Ask whether YNorth's printed plan
+  could be useful to that program. Even a "not yet" gets you remembered.
+
+### The JPA board — real leverage, easy to misuse
+
+The board is sitting city councilmembers and two County Supervisors. Homeless-
+ness is *the* political issue in this county. For a councilmember, "our library
+district is piloting a free housing navigator built by a local student" is a
+press release, a photo, and a constituent-services win with **zero budget
+ask**. That is genuine leverage.
+
+Two rules for using it:
+
+1. **Staff first, always.** Elected officials resent being used to jump the
+   line on their own staff, and staff never forget it. Work Tracks A and B
+   first. A board member's job is to *amplify* something staff already like,
+   not to overrule them for you.
+2. **Don't wait on the calendar.** The board meets as few as four times a year.
+   Nothing you're asking for in Tier 0 or 1 needs board approval at all. Use
+   public comment for visibility and the record, and keep the staff track
+   moving in parallel. Agendas post in advance under the Brown Act.
+
+### Who to email, in order
+
+1. **Community Library Managers** at Milpitas, then Gilroy and Morgan Hill.
+   Named publicly on the district site. Start here. Always.
+2. **District administration / the County Librarian's office** — after you have
+   two or three branch yeses, never before.
+3. **SCCLD Foundation** (a separate 501(c)(3) with its own directors) and the
+   branch **Friends of the Library** groups — they fund things staff want but
+   can't buy, and their opinion carries real weight with staff.
+4. **County Office of Supportive Housing** and **Destination: Home** — a single
+   sentence of endorsement from either makes every conversation above easier.
+   Given the Behavioral Health precedent, a county-department co-sign is the
+   thing most likely to unlock a district-wide yes.
+
+### The district email
+
+Send this to a Community Library Manager. Track A, not Track B.
+
+> **Subject: Housing version of your Mental Health Access series — 15 minutes?**
+>
+> Hi [Name],
+>
+> I'm [name], a [student] in Milpitas. I saw SCCLD partnered with County
+> Behavioral Health, NAMI, and Bay Area Legal Aid on the Mental Health Access
+> series — teaching people how to actually get through the red tape to
+> services that already exist.
+>
+> I built the housing version of that, and I'd like to offer it to you free.
+>
+> It's called YNorth. A patron describes their situation in their own words —
+> by voice or text, in English, Spanish, Vietnamese, Chinese, Tagalog, or [N]
+> other languages — and gets back an ordered, plain-language plan: what to do
+> now, what's next, which document each step needs, and a real verified local
+> resource with a working number. They print it and walk out holding it. It
+> stores nothing about the patron on any server.
+>
+> I'm not asking you to install anything. My ask is a QR flyer at your desk
+> and a mention in the staff resource binder, as a 90-day pilot at [branch].
+> No cost, no contract, no patron data, reversible by throwing away a flyer.
+>
+> It's built to route people *into* MyConnectSV and County Coordinated Entry,
+> not around them.
+>
+> Two questions if you have a moment: could I have 15 minutes to show you? And
+> who owns the district's Community Resources page — is adding a link there a
+> branch decision or a district one?
+>
+> Thank you,
+> [Name] · [phone] · [ynorth.org/for-libraries]
+
+That last paragraph is doing real work. It gets you the org chart for free,
+from someone with no reason to withhold it, in the same email as your ask.
+
+---
+
 ## Do you need to be a nonprofit?
 
 **To get a bookmark or a resource listing: no.** To get a district-wide
