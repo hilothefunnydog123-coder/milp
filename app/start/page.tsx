@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Compass, ArrowLeft, ArrowRight, Mic, MicOff, Play, Users, Languages } from "lucide-react";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
+import { store } from "@/lib/library";
 
 const CHIPS = [
   "I lost my job", "I'm staying in my car", "I'm couch-surfing", "I'm behind on rent",
@@ -31,9 +32,9 @@ export default function Start() {
     setLocation(label);
     setLocationPicked(true);
     if (typeof lat === "number" && typeof lng === "number" && isFinite(lat) && isFinite(lng)) {
-      localStorage.setItem("yn_coords", JSON.stringify({ lat, lng }));
+      store.set("yn_coords", JSON.stringify({ lat, lng }));
     } else {
-      localStorage.removeItem("yn_coords"); // map/weather will geocode the label instead
+      store.remove("yn_coords"); // map/weather will geocode the label instead
     }
   }
 
@@ -99,10 +100,10 @@ export default function Start() {
       });
       const data = await res.json();
       if (data.path) {
-        localStorage.setItem("yn_path", JSON.stringify(data.path));
-        localStorage.setItem("yn_lang", language);
-        localStorage.setItem("yn_situation", situation);
-        localStorage.setItem("yn_progress", JSON.stringify({}));
+        store.set("yn_path", JSON.stringify(data.path));
+        store.set("yn_lang", language);
+        store.set("yn_situation", situation);
+        store.set("yn_progress", JSON.stringify({}));
         router.push("/path");
       }
     } finally {
@@ -157,7 +158,12 @@ export default function Start() {
           <p className="mx-auto mt-4 max-w-md text-muted">
             {advocate
               ? "Describe their situation in a few words. There are no wrong answers."
-              : "In your own words — type or talk. There are no wrong answers, and your words stay on your device."}
+              : (
+                <>
+                  <span className="yn-personal-only">In your own words — type or talk. There are no wrong answers, and your words stay on your device.</span>
+                  <span className="yn-library-only">In your own words — type or talk. There are no wrong answers, and nothing you write is saved to this computer.</span>
+                </>
+              )}
           </p>
           <button onClick={loadSample} className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-4 py-2 text-sm text-muted transition hover:border-gold/50 hover:text-ink">
             <Play className="h-3.5 w-3.5 text-gold" /> See a live example
@@ -238,7 +244,10 @@ export default function Start() {
           {!locationPicked && situation.trim() && (
             <p className="text-center text-xs text-gold/80">Almost there — pick your exact city above so we find the right place.</p>
           )}
-          <p className="text-center text-xs text-muted">Private by design — your words stay on your device.</p>
+          <p className="text-center text-xs text-muted">
+            <span className="yn-personal-only">Private by design — your words stay on your device.</span>
+            <span className="yn-library-only">Private by design — nothing is saved to this computer, and you can erase everything at any time.</span>
+          </p>
         </div>
       </motion.div>
     </main>

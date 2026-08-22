@@ -7,6 +7,7 @@ import { Compass, RotateCcw } from "lucide-react";
 import CompassView from "@/components/CompassView";
 import Celebrate from "@/components/Celebrate";
 import type { CompassPath } from "@/lib/types";
+import { store } from "@/lib/library";
 
 export default function PathPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function PathPage() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("yn_path");
+      const raw = store.get("yn_path");
       if (raw) {
         setPath(JSON.parse(raw));
         setCelebrate(true);

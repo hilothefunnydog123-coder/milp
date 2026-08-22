@@ -3,6 +3,8 @@ import "./globals.css";
 import AccessibilityToggle from "@/components/AccessibilityToggle";
 import MotionProvider from "@/components/MotionProvider";
 import PitchWidget from "@/components/PitchWidget";
+import LibraryMode from "@/components/LibraryMode";
+import { LIBRARY_ATTR, LIBRARY_BOOT_SCRIPT, LIBRARY_BUILD } from "@/lib/library";
 
 export const metadata: Metadata = {
   title: "YNorth — Find your way home",
@@ -27,8 +29,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    // `suppressHydrationWarning` because the boot script below may add
+    // data-library to <html> before React hydrates. A whole-deployment library
+    // build sets it server-side instead, so there is nothing to reconcile.
+    <html lang="en" {...(LIBRARY_BUILD ? { [LIBRARY_ATTR]: "1" } : {})} suppressHydrationWarning>
       <head>
+        {/*
+          Runs synchronously during HTML parsing, before first paint, so the
+          pieces library mode removes are never briefly visible on a shared
+          computer. Mirrors resolveLibraryMode() in lib/library.ts.
+        */}
+        {!LIBRARY_BUILD && <script dangerouslySetInnerHTML={{ __html: LIBRARY_BOOT_SCRIPT }} />}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -42,7 +53,11 @@ export default function RootLayout({
         <MotionProvider>
           <div style={{ position: "relative", zIndex: 2 }}>{children}</div>
           <AccessibilityToggle />
-          <PitchWidget />
+          {/* presenter deck: a demo aid, never shown to a patron on a library PC */}
+          <div className="yn-personal-only">
+            <PitchWidget />
+          </div>
+          <LibraryMode />
         </MotionProvider>
       </body>
     </html>

@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CloudRain, Snowflake, ThermometerSnowflake, PhoneCall } from "lucide-react";
+import { store } from "@/lib/library";
 
 interface W { temp: number; wet: boolean; snow: boolean }
 
@@ -23,7 +24,7 @@ export default function WeatherUrgency({ location }: { location: string }) {
         // prefer the exact coordinates of the place the user picked
         let lat: number, lng: number;
         const stored = (() => {
-          try { const s = JSON.parse(localStorage.getItem("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
+          try { const s = JSON.parse(store.get("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
         })();
         if (stored) {
           lat = stored.lat; lng = stored.lng;

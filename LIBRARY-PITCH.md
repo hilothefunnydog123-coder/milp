@@ -473,14 +473,19 @@ confidential, and library staff take patron privacy more seriously than almost
 any other public institution. Your on-device architecture is genuinely your
 single strongest selling point here. Lead with it.
 
-> **But there is a real bug you must fix first.** YNorth writes the patron's
+> **This had a real bug, now fixed.** YNorth used to write the patron's
 > own words to persistent `localStorage` (`yn_situation`, `yn_path`,
-> `yn_coords` in `app/start/page.tsx`). On a *shared public library computer*
-> that means the next patron at that terminal can read the previous patron's
-> housing crisis. A librarian will think of this in about four seconds and you
-> will lose the room. It is also the exact thing that turns your best claim —
-> "nothing touches our servers" — into a liability, because the risk moved
-> onto their hardware.
+> `yn_coords`). On a *shared public library computer* that meant the next
+> patron at that terminal could read the previous patron's housing crisis — a
+> librarian thinks of this in about four seconds, and it turns your best claim
+> ("nothing touches our servers") into a liability, because the risk had simply
+> moved onto their hardware.
+>
+> Library mode now routes every write to `sessionStorage`, adds a one-tap
+> erase, and wipes automatically after inactivity. See `lib/library.ts` and
+> `components/LibraryMode.tsx`. **Demo it in the meeting** — `?idle=30` shortens
+> the auto-wipe so a librarian can watch it happen instead of taking your word
+> for it.
 
 Fix before you pitch (see Product prep below): session-only storage in library
 mode, a prominent **"Erase my plan"** button, and an idle auto-clear.
@@ -542,9 +547,11 @@ that identify a person. State all six explicitly in the one-pager.
 
 You get one shot with each branch. Ship these first.
 
-1. **Library kiosk mode** (`?mode=library` or a subdomain): session-only
-   storage, big persistent "Erase my plan and start over" button, auto-clear
-   after ~5 minutes idle, outbound AI calling disabled.
+1. ~~**Library kiosk mode.**~~ **Done.** `?mode=library` (or
+   `NEXT_PUBLIC_LIBRARY_MODE=1` for a dedicated branch subdomain): session-only
+   storage, a standing "Private session" badge, one-tap "Erase & finish",
+   auto-wipe after 10 minutes idle with a 60-second warning, and outbound AI
+   calling, the Guardian agent, and follow-up check-ins all switched off.
 2. **Verify the print path on a real printer.** You already have a print
    stylesheet (`app/globals.css`, "print: a clean, ink-friendly one-pager") —
    good, most people don't. Now prove it: print the full plan to B&W on a
@@ -571,13 +578,10 @@ You get one shot with each branch. Ship these first.
 7. **Name your languages.** SCC libraries serve large Spanish, Vietnamese,
    Chinese, and Tagalog-speaking populations. Listing those four by name is
    worth more than "10 languages."
-8. **Remove the pitch-deck widget and every "hackathon" reference.**
-   `components/PitchWidget.tsx` floats your judging deck on every page. It is
-   perfect for a demo stage and fatal in a library — it announces that the
-   patron is looking at someone's competition entry. Gate it behind a flag
-   that is off in library mode, and scrub "Milpitas Hacks" from user-facing
-   copy (keep it in the README; it's a good origin story in person, and a bad
-   one on the screen a patron in crisis is reading).
+8. ~~**Remove the pitch-deck widget.**~~ **Done** — `PitchWidget` is hidden in
+   library mode. Still to do: scrub "Milpitas Hacks" from any user-facing copy
+   (keep it in the README; it's a good origin story in person, and a bad one on
+   the screen a patron in crisis is reading).
 
 ---
 

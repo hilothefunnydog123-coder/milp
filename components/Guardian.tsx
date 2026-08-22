@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
 import Celebrate from "./Celebrate";
+import { store } from "@/lib/library";
 
 interface NearbyOption { name: string; city?: string; helpsWith?: string; contact?: string }
 interface Turn { speaker: string; text: string }
@@ -88,7 +89,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   }
 
   function situation() {
-    return typeof window !== "undefined" ? localStorage.getItem("yn_situation") || "is experiencing a housing emergency" : "";
+    return store.get("yn_situation") || "is experiencing a housing emergency";
   }
 
   // ---- enroll: start the autonomous watch + a real grounded nearby-city scan ----

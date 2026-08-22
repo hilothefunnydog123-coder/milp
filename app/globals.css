@@ -143,6 +143,22 @@ html.high-contrast {
 }
 html.high-contrast .sky { opacity: 0.5; }
 
+/* ---------- library mode: YNorth on a shared public computer ----------
+   Visibility is driven entirely by [data-library] on <html>, set before first
+   paint by the boot script in app/layout.tsx. Doing it in CSS rather than in
+   React keeps the server and client markup identical (no hydration mismatch)
+   and means the pieces library mode removes are never briefly painted on a
+   terminal a stranger will use next.
+
+   `display: contents` so these wrappers stay invisible to layout — the
+   children lay out exactly as they would without the wrapper. Only ever put
+   these classes on a plain wrapper element, never on one that is itself
+   positioned or laid out. */
+.yn-library-only { display: none; }
+.yn-personal-only { display: contents; }
+[data-library="1"] .yn-library-only { display: contents; }
+[data-library="1"] .yn-personal-only { display: none; }
+
 /* ---------- print: a clean, ink-friendly one-pager ---------- */
 @media print {
   .no-print { display: none !important; }

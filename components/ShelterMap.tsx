@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import { MapPinned, Loader2 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
 import type { Pin } from "./MapInner";
+import { store } from "@/lib/library";
 
 const MapInner = dynamic(() => import("./MapInner"), {
   ssr: false,
@@ -83,7 +84,7 @@ export default function ShelterMap({ location, resources = [] }: { location: str
     (async () => {
       // prefer the exact coordinates of the place the user picked
       const stored = (() => {
-        try { const s = JSON.parse(localStorage.getItem("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
+        try { const s = JSON.parse(store.get("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
       })();
       const c = stored || (await geo(location));
       if (cancelled) return;

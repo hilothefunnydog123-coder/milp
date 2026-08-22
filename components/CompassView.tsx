@@ -32,11 +32,13 @@ import {
 import QRCode from "qrcode";
 import AnimatedNumber from "./AnimatedNumber";
 import CallForMe from "./CallForMe";
+import CallOnYourOwn from "./CallOnYourOwn";
 import Guardian from "./Guardian";
 import Companion from "./Companion";
 import ShelterMap from "./ShelterMap";
 import WeatherUrgency from "./WeatherUrgency";
 import type { CompassPath } from "@/lib/types";
+import { store } from "@/lib/library";
 
 const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
 
@@ -62,7 +64,7 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
     if (scripts[id]) return setScripts((s) => ({ ...s, [id]: "" }));
     setScriptBusy(id);
     try {
-      const lang = typeof window !== "undefined" ? localStorage.getItem("yn_lang") || "English" : "English";
+      const lang = store.get("yn_lang") || "English";
       const res = await fetch("/api/compass", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,7 +97,7 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
   }
 
   function persist(key: string, val: Record<string, boolean>) {
-    if (!readOnly) localStorage.setItem(key, JSON.stringify(val));
+    if (!readOnly) store.set(key, JSON.stringify(val));
   }
   function toggleStep(id: string) {
     if (readOnly) return;
@@ -166,8 +168,15 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
         <p className="mt-3 font-display text-2xl leading-snug">{path.summary}</p>
       </motion.div>
 
-      {/* THE hero action — let YNorth make the call for you */}
-      {!readOnly && <div className="no-print"><CallForMe resources={path.localResources} /></div>}
+      {/* THE hero action. On a personal device YNorth places the call; on a
+          library computer that is switched off (see CallOnYourOwn) and the
+          numbers are printed instead. */}
+      {!readOnly && (
+        <>
+          <div className="yn-personal-only no-print"><CallForMe resources={path.localResources} /></div>
+          <div className="yn-library-only"><CallOnYourOwn resources={path.localResources} /></div>
+        </>
+      )}
 
       {/* learning model — community wisdom */}
       {(path.community?.top?.length ?? 0) > 0 && (
@@ -323,11 +332,14 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
         })}
       </div>
 
-      {/* autonomous agent: keeps watching, books, guides transport */}
-      {!readOnly && <div className="no-print"><Guardian resources={path.localResources} location={path.location} /></div>}
+      {/* autonomous agent: keeps watching, books, guides transport. Personal
+          devices only — it works after you walk away, which is exactly what a
+          shared terminal cannot promise. */}
+      {!readOnly && <div className="yn-personal-only no-print"><Guardian resources={path.localResources} location={path.location} /></div>}
 
-      {/* follow-up companion: gentle check-ins tied to the next step */}
-      {!readOnly && <div className="no-print"><Companion path={path} /></div>}
+      {/* follow-up companion: gentle check-ins tied to the next step. Personal
+          devices only — a check-in has nowhere to land on a library computer. */}
+      {!readOnly && <div className="yn-personal-only no-print"><Companion path={path} /></div>}
 
       {/* documents */}
       {path.documents.length > 0 && (
@@ -384,10 +396,10 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
           {[
             { I: Sparkles, t: "Gemini 2.5 Flash", d: "Plans your path, writes your call scripts, translates, and explains everything in plain language." },
             { I: MapPin, t: "Google Search grounding", d: "Finds real, local, cited resources live — it can never invent a fake shelter or number." },
-            { I: Phone, t: "Vapi voice agent", d: "Places real two-way phone calls on your behalf, in your language, and books beds." },
+            { I: Phone, t: "Vapi voice agent", d: "Places real two-way phone calls on your behalf, in your language, and books beds.", cls: "yn-personal-only" },
             { I: Brain, t: "YNorth Brain", d: "A self-improving model that learns from every journey what truly helps, for the next person." },
           ].map((x) => (
-            <div key={x.t} className="flex gap-3">
+            <div key={x.t} className={`flex gap-3 ${x.cls ?? ""}`}>
               <x.I className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
               <div><div className="text-sm font-semibold">{x.t}</div><div className="text-xs leading-relaxed text-muted">{x.d}</div></div>
             </div>

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { HeartHandshake, Bell, Check } from "lucide-react";
 import type { CompassPath, CompassStep } from "@/lib/types";
+import { store } from "@/lib/library";
 
 export default function Companion({ path }: { path: CompassPath }) {
   const [active, setActive] = useState<CompassStep | undefined>(path.steps[0]);
@@ -18,7 +19,7 @@ export default function Companion({ path }: { path: CompassPath }) {
 
   useEffect(() => {
     let done: Record<string, boolean> = {};
-    try { done = JSON.parse(localStorage.getItem("yn_progress") || "{}"); } catch {}
+    try { done = JSON.parse(store.get("yn_progress") || "{}"); } catch {}
     const idx = path.steps.findIndex((s) => !done[s.id]);
     const i = idx < 0 ? 0 : idx;
     setActive(path.steps[i]);

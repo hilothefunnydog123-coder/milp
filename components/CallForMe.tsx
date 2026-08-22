@@ -23,6 +23,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
+import { store } from "@/lib/library";
 
 interface Turn { speaker: string; text: string }
 type Phase = "idle" | "consent" | "calling" | "done" | "error";
@@ -65,7 +66,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
   }, []);
 
   function situation() {
-    return typeof window !== "undefined" ? localStorage.getItem("yn_situation") || "is facing a housing emergency" : "";
+    return store.get("yn_situation") || "is facing a housing emergency";
   }
 
   function openConsent(num = "", lbl = "the help line") {
@@ -94,7 +95,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     setError(""); setTranscript([]); setInstructions(""); setSeconds(0); setCanceled(false);
     setPhase("calling");
     clock.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    const lang = localStorage.getItem("yn_lang") || "English";
+    const lang = store.get("yn_lang") || "English";
     try {
       const res = await fetch("/api/call", {
         method: "POST",
