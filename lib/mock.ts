@@ -1,6 +1,12 @@
 // Deterministic fallback used when there is no Gemini key (or it fails): builds a
 // sensible, warm path home from the person's situation so the app always works in
 // a demo, with no external calls.
+//
+// Every `resourceKey` below is checked against the curated table at compile
+// time: they are `ResourceKey`s, not strings, so a typo here can't ship a step
+// that points at a resource which doesn't exist.
+import { nowIso, stepId } from "./brand";
+import { ALWAYS_OFFERED, type ResourceKey } from "./resources";
 import type { CompassPath, CompassStep, Intake } from "./types";
 
 function has(s: string, ...words: string[]) {
@@ -9,7 +15,7 @@ function has(s: string, ...words: string[]) {
 }
 
 let n = 0;
-const id = () => `s${++n}`;
+const id = () => stepId(++n);
 
 /** Deterministic, warm path used when there's no Gemini key (or it fails). */
 export function mockPath(intake: Intake): CompassPath {
@@ -142,10 +148,10 @@ export function mockPath(intake: Intake): CompassPath {
     ])
   );
 
-  const resources = Array.from(
-    new Set(steps.map((st) => st.resourceKey).filter(Boolean) as string[])
-  );
-  resources.push("crisis");
+  const resources: ResourceKey[] = steps
+    .map((step) => step.resourceKey)
+    .filter((key): key is ResourceKey => key !== undefined);
+  resources.push(ALWAYS_OFFERED);
 
   return {
     summary: `You're carrying a lot right now, and reaching out already took courage. Here in ${loc}, there's a real path forward — and you don't have to walk it alone or figure it out all at once. Start at the top. One step at a time.`,
@@ -157,7 +163,7 @@ export function mockPath(intake: Intake): CompassPath {
     tags: [],
     community: { runs: 1240, top: [] },
     location: loc,
-    createdAt: new Date().toISOString(),
+    createdAt: nowIso(),
   };
 }
 

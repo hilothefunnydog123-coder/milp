@@ -4,9 +4,8 @@
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-
-export type Availability = "available" | "unsure" | "unavailable";
-export interface Pin { name: string; address: string; lat: number; lng: number; status?: Availability }
+import { AVAILABILITY_LABEL, type Availability, type MapPin } from "@/lib/types";
+import type { Coords } from "@/lib/brand";
 
 const icon = (cls: string, size = 20) =>
   L.divIcon({ className: "", html: `<div class="yn-pin ${cls}"></div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
@@ -18,13 +17,7 @@ const ICONS: Record<Availability, L.DivIcon> = {
 };
 const youIcon = icon("yn-pin-you", 22);
 
-const STATUS_LABEL: Record<Availability, string> = {
-  available: "Available now",
-  unsure: "Availability unknown — call to check",
-  unavailable: "Currently full",
-};
-
-export default function MapInner({ center, pins }: { center: { lat: number; lng: number }; pins: Pin[] }) {
+export default function MapInner({ center, pins }: { center: Coords; pins: MapPin[] }) {
   return (
     <MapContainer
       center={[center.lat, center.lng]}
@@ -50,7 +43,7 @@ export default function MapInner({ center, pins }: { center: { lat: number; lng:
             <Tooltip direction="top" offset={[0, -8]} className="yn-tip">
               <strong>{p.name}</strong>
               <br />{p.address}
-              <br /><span style={{ opacity: 0.85 }}>{STATUS_LABEL[status]}</span>
+              <br /><span style={{ opacity: 0.85 }}>{AVAILABILITY_LABEL[status]}</span>
             </Tooltip>
           </Marker>
         );

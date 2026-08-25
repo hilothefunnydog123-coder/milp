@@ -8,45 +8,52 @@
 //
 // In production the "vacancy watch" would subscribe to HMIS / 211 bed-availability
 // feeds; for the demo the watch is simulated client-side and clearly labeled.
+//
+// Both actions hand model output straight to the UI, so both parse it through
+// the same schemas the client will validate the reply against — an option that
+// reaches the Guardian is one that survived the contract on the way out.
 // ============================================================================
 
-import { NextRequest, NextResponse } from "next/server";
-import { callGeminiGrounded, extractJsonArray } from "@/lib/gemini";
+import { NextResponse, type NextRequest } from "next/server";
+import { callGeminiGrounded, parseModelList } from "@/lib/gemini";
+import { badRequest, parseBody } from "@/lib/route";
+import { nearbyOptionSchema, type ActionPayload, type ResponseOf } from "@/lib/api";
+import { assertNever } from "@/lib/typed";
+
+type Reply<A extends "nearby" | "transport"> = ResponseOf<"/api/agent", A>;
+
+/** Real shelter / interim-housing options in cities around them. */
+async function nearby(body: ActionPayload<"/api/agent", "nearby">): Promise<Reply<"nearby">> {
+  if (!body.location) return { options: [], sources: [] };
+  const prompt = `Find 3-4 REAL emergency shelters or interim-housing programs in cities NEAR "${body.location}" (not in ${body.location} itself — the surrounding region), suitable for someone who: "${body.situation}". Real, currently-operating places only.
+Return ONLY a JSON array: [{ "name": "...", "city": "...", "helpsWith": "...", "contact": "..." }]. If none found, return [].`;
+  const { text, sources } = await callGeminiGrounded(prompt, 0.2);
+  return { options: parseModelList(text, nearbyOptionSchema).slice(0, 4), sources };
+}
+
+/** Step-by-step, low-cost transportation guidance to a destination. */
+async function transport(body: ActionPayload<"/api/agent", "transport">): Promise<Reply<"transport">> {
+  const prompt = `Give simple, step-by-step, LOW-COST public-transit directions for someone experiencing homelessness to get from "${body.origin}" to "${body.destination}". Include specific bus/train routes if you can find them, the approximate fare, and any free or reduced-fare transit programs for people experiencing homelessness in that area. Plain, warm language, numbered steps. Keep it short.`;
+  const { text, sources } = await callGeminiGrounded(prompt, 0.3);
+  const steps =
+    text ||
+    `1. Call 211 and ask about free or reduced-fare transit to ${body.destination}.\n` +
+      `2. Ask the shelter if they offer transportation or a bus token.\n` +
+      `3. If you can, share your location with a caseworker who can help arrange a ride.`;
+  return { steps, sources };
+}
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const action = body.action as string;
+  const parsed = await parseBody("/api/agent", req);
+  if (!parsed.ok) return badRequest(parsed.error);
+  const body = parsed.value;
 
-  // ---- find shelter / housing options in NEARBY cities ----
-  if (action === "nearby") {
-    const location = String(body.location || "").slice(0, 80);
-    const situation = String(body.situation || "").slice(0, 400);
-    if (!location) return NextResponse.json({ options: [], sources: [] });
-    const prompt = `Find 3-4 REAL emergency shelters or interim-housing programs in cities NEAR "${location}" (not in ${location} itself — the surrounding region), suitable for someone who: "${situation}". Real, currently-operating places only.
-Return ONLY a JSON array: [{ "name": "...", "city": "...", "helpsWith": "...", "contact": "..." }]. If none found, return [].`;
-    const { text, sources } = await callGeminiGrounded(prompt, 0.2);
-    const arr = extractJsonArray(text)
-      .filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null)
-      .slice(0, 4)
-      .map((x) => ({
-        name: String(x.name || "").slice(0, 100),
-        city: String(x.city || "").slice(0, 60),
-        helpsWith: String(x.helpsWith || "").slice(0, 160),
-        contact: x.contact ? String(x.contact).slice(0, 120) : undefined,
-      }))
-      .filter((o) => o.name);
-    return NextResponse.json({ options: arr, sources });
+  switch (body.action) {
+    case "nearby":
+      return NextResponse.json<Reply<"nearby">>(await nearby(body));
+    case "transport":
+      return NextResponse.json<Reply<"transport">>(await transport(body));
+    default:
+      return assertNever(body, "agent action");
   }
-
-  // ---- step-by-step, low-cost transportation guidance to a destination ----
-  if (action === "transport") {
-    const origin = String(body.origin || "").slice(0, 80);
-    const destination = String(body.destination || "").slice(0, 160);
-    const prompt = `Give simple, step-by-step, LOW-COST public-transit directions for someone experiencing homelessness to get from "${origin}" to "${destination}". Include specific bus/train routes if you can find them, the approximate fare, and any free or reduced-fare transit programs for people experiencing homelessness in that area. Plain, warm language, numbered steps. Keep it short.`;
-    const { text, sources } = await callGeminiGrounded(prompt, 0.3);
-    const steps = text || `1. Call 211 and ask about free or reduced-fare transit to ${destination}.\n2. Ask the shelter if they offer transportation or a bus token.\n3. If you can, share your location with a caseworker who can help arrange a ride.`;
-    return NextResponse.json({ steps, sources });
-  }
-
-  return NextResponse.json({ error: "Unknown action." }, { status: 400 });
 }

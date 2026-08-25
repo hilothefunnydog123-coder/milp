@@ -4,21 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Compass, HeartHandshake } from "lucide-react";
 import CompassView from "@/components/CompassView";
+import { decodePath } from "@/lib/share";
 import type { CompassPath } from "@/lib/types";
 
 export default function SharePage() {
   const [path, setPath] = useState<CompassPath | null>(null);
   const [error, setError] = useState(false);
 
+  // A URL fragment is the least trusted input we have — decodePath validates the
+  // whole path before any of it reaches the view.
   useEffect(() => {
-    try {
-      const hash = window.location.hash.slice(1);
-      if (!hash) return setError(true);
-      const json = decodeURIComponent(atob(hash));
-      setPath(JSON.parse(json));
-    } catch {
-      setError(true);
-    }
+    const decoded = decodePath(window.location.hash);
+    if (decoded.ok) setPath(decoded.value);
+    else setError(true);
   }, []);
 
   if (error) {

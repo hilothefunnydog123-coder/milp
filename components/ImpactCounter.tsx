@@ -6,13 +6,18 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedNumber from "./AnimatedNumber";
-
-interface Impact { paths: number; calls: number; beds: number; languages: number }
+import { get } from "@/lib/client";
+import { GET_ENDPOINTS, type ImpactSnapshot } from "@/lib/api";
 
 export default function ImpactCounter() {
-  const [d, setD] = useState<Impact | null>(null);
+  const [d, setD] = useState<ImpactSnapshot | null>(null);
+  // The counter's shape is the endpoint's shape — one declaration, in lib/api.ts.
   useEffect(() => {
-    fetch("/api/impact").then((r) => r.json()).then(setD).catch(() => {});
+    let live = true;
+    void get(GET_ENDPOINTS.impact()).then((result) => {
+      if (live && result.ok) setD(result.value);
+    });
+    return () => { live = false; };
   }, []);
   // Honest by design: only show the counter once there's real, earned usage.
   if (!d || d.paths + d.calls + d.beds === 0) return null;

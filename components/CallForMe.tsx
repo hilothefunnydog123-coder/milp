@@ -23,19 +23,14 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
+import { get, post, signal } from "@/lib/client";
+import { describeFailure } from "@/lib/fetch";
+import { GET_ENDPOINTS, type CallProvider, type TranscriptTurn } from "@/lib/api";
+import { read } from "@/lib/storage";
+import { dialable, type CallId } from "@/lib/brand";
+import { canSpeak, speak as speakAloud, stopSpeaking } from "@/lib/speech";
 
-interface Turn { speaker: string; text: string }
 type Phase = "idle" | "consent" | "calling" | "done" | "error";
-
-function extractPhone(s?: string): string {
-  if (!s) return "";
-  const m = s.match(/\+?\d[\d\s().-]{6,}\d/);
-  if (!m) return "";
-  let d = m[0].replace(/[^\d+]/g, "");
-  if (d.length === 10) d = "+1" + d;
-  else if (d.length === 11 && d[0] === "1") d = "+" + d;
-  return d;
-}
 
 export default function CallForMe({ resources = [] }: { resources?: LocalResource[] }) {
   const [phase, setPhase] = useState<Phase>("idle");
@@ -43,9 +38,9 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
   const [number, setNumber] = useState("");
   const [label, setLabel] = useState("the help line");
   const [consent, setConsent] = useState(false);
-  const [transcript, setTranscript] = useState<Turn[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [instructions, setInstructions] = useState("");
-  const [provider, setProvider] = useState("");
+  const [provider, setProvider] = useState<CallProvider | "">("");
   const [controlUrl, setControlUrl] = useState("");
   const [canceled, setCanceled] = useState(false);
   const [error, setError] = useState("");
@@ -55,17 +50,17 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
   const poll = useRef<ReturnType<typeof setInterval> | null>(null);
   const clock = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const callable = resources.filter((r) => extractPhone(r.contact));
+  const callable = resources.filter((r) => dialable(r.contact));
 
   useEffect(() => () => {
     timers.current.forEach(clearTimeout);
     if (poll.current) clearInterval(poll.current);
     if (clock.current) clearInterval(clock.current);
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    stopSpeaking();
   }, []);
 
   function situation() {
-    return typeof window !== "undefined" ? localStorage.getItem("yn_situation") || "is facing a housing emergency" : "";
+    return read("situation") || "is facing a housing emergency";
   }
 
   function openConsent(num = "", lbl = "the help line") {
@@ -82,10 +77,8 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     timers.current.forEach(clearTimeout);
     if (poll.current) clearInterval(poll.current);
     stopClock();
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
-    if (provider === "vapi" && controlUrl) {
-      fetch("/api/call", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end", controlUrl }) }).catch(() => {});
-    }
+    stopSpeaking();
+    if (provider === "vapi" && controlUrl) signal("/api/call", { action: "end", controlUrl });
     setCanceled(true);
     setPhase("done");
   }
@@ -94,23 +87,25 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     setError(""); setTranscript([]); setInstructions(""); setSeconds(0); setCanceled(false);
     setPhase("calling");
     clock.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    const lang = localStorage.getItem("yn_lang") || "English";
-    try {
-      const res = await fetch("/api/call", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, number, situation: situation(), language: lang }),
-      });
-      const data = await res.json();
-      if (data.error) { setError(data.error); setPhase("error"); stopClock(); return; }
-      setProvider(data.provider);
-      setControlUrl(data.controlUrl || "");
-      if (data.provider === "mock") simulate();
-      else pollVapi(data.callId);
-    } catch {
-      setError("Couldn't start the call. Please try again.");
-      setPhase("error"); stopClock();
+    const started = await post("/api/call", {
+      action: "start",
+      name,
+      number,
+      situation: situation(),
+      language: read("language"),
+      objective: "",
+      firstMessage: "",
+    });
+    if (!started.ok) {
+      setError(describeFailure(started.error));
+      setPhase("error");
+      stopClock();
+      return;
     }
+    setProvider(started.value.provider);
+    setControlUrl(started.value.controlUrl ?? "");
+    if (started.value.provider === "mock") simulate();
+    else pollVapi(started.value.callId);
   }
 
   function stopClock() { if (clock.current) clearInterval(clock.current); }
@@ -121,7 +116,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     const N = name || "them";
     const S = situation();
     const who = label === "the help line" ? "the help line" : label;
-    const script: Turn[] = [
+    const script: TranscriptTurn[] = [
       { speaker: "assistant", text: `Hi, my name is YNorth and I'm calling on behalf of ${N}. They're facing a housing emergency and asked me to find out how they can get help — do you have a moment?` },
       { speaker: "caller", text: "Of course, I'd be glad to help. Can you tell me a bit about what's going on?" },
       { speaker: "assistant", text: `Thank you. ${N} ${S.slice(0, 160)}. What are the immediate next steps they should take?` },
@@ -137,32 +132,29 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
     ), 1400 + script.length * 2400 + 900));
   }
 
-  function pollVapi(callId: string) {
-    const started = Date.now();
+  function pollVapi(callId: CallId) {
+    const startedAt = Date.now();
     poll.current = setInterval(async () => {
-      try {
-        const r = await fetch(`/api/call/${callId}`);
-        const d = await r.json();
-        if (Array.isArray(d.transcript) && d.transcript.length) setTranscript(d.transcript);
-        if (d.status === "completed" || Date.now() - started > 180000) {
-          if (poll.current) clearInterval(poll.current);
-          const ir = await fetch("/api/call", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "instructions", name, transcript: d.transcript || transcript }),
-          });
-          finish((await ir.json()).instructions || "");
-        }
-      } catch { /* keep polling */ }
+      const status = await get(GET_ENDPOINTS.callStatus(callId));
+      if (!status.ok) return; // a dropped poll is fine; the next one will land
+      const live = status.value.transcript;
+      if (live.length) setTranscript(live);
+      if (status.value.status === "completed" || Date.now() - startedAt > 180_000) {
+        if (poll.current) clearInterval(poll.current);
+        const written = await post("/api/call", {
+          action: "instructions",
+          name,
+          transcript: live.length ? live : transcript,
+        });
+        finish(written.ok ? written.value.instructions : "");
+      }
     }, 2800);
   }
 
   function speak() {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
-    const u = new SpeechSynthesisUtterance(instructions);
-    u.rate = 0.95; u.onend = () => setSpeaking(false);
-    window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); setSpeaking(true);
+    if (!canSpeak()) return;
+    if (speaking) { stopSpeaking(); setSpeaking(false); return; }
+    setSpeaking(speakAloud(instructions, { onEnd: () => setSpeaking(false) }));
   }
 
   const status = canceled ? "Call ended" : phase === "calling" ? (transcript.length === 0 ? "Connecting…" : "On the call") : "Call complete";
@@ -183,7 +175,7 @@ export default function CallForMe({ resources = [] }: { resources?: LocalResourc
             <p className="mt-5 text-xs uppercase tracking-wider text-muted">Call one of these for me</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {callable.slice(0, 4).map((r, i) => (
-                <button key={i} onClick={() => openConsent(extractPhone(r.contact), r.name)} className="rounded-full border border-gold/30 bg-gold/5 px-4 py-2 text-sm text-ink transition hover:border-gold/60">
+                <button key={i} onClick={() => openConsent(dialable(r.contact), r.name)} className="rounded-full border border-gold/30 bg-gold/5 px-4 py-2 text-sm text-ink transition hover:border-gold/60">
                   <PhoneCall className="mr-1.5 inline h-3.5 w-3.5 text-gold" />{r.name}
                 </button>
               ))}

@@ -9,12 +9,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronUp, ChevronDown, Move, Minus, X, Presentation } from "lucide-react";
-
-const LS_PAGE = "yn_deck_page";
-const LS_POS = "yn_deck_pos";
-const LS_SIZE = "yn_deck_size";
-const LS_OPEN = "yn_deck_open";
-const LS_MIN = "yn_deck_min";
+import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
+import { read, write } from "@/lib/storage";
 
 export default function PitchWidget() {
   const [ready, setReady] = useState(false);
@@ -26,24 +22,27 @@ export default function PitchWidget() {
   const [size, setSize] = useState({ w: 320, h: 244 });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const taskRef = useRef<any>(null);
+  // PDF.js ships its own types — `PDFDocumentProxy` and `RenderTask` say
+  // exactly what `getPage`, `getViewport` and `render` accept and return, so
+  // the two `any` refs that used to live here are gone.
+  const pdfRef = useRef<PDFDocumentProxy | null>(null);
+  const taskRef = useRef<RenderTask | null>(null);
   const pageRef = useRef(1);
 
   // load persisted state + the PDF
   useEffect(() => {
-    try {
-      const p = Number(localStorage.getItem(LS_PAGE)); if (p) { setPage(p); pageRef.current = p; }
-      if (localStorage.getItem(LS_OPEN) === "0") setOpen(false);
-      if (localStorage.getItem(LS_MIN) === "1") setMinimized(true);
-      const sp = JSON.parse(localStorage.getItem(LS_POS) || "null"); if (sp) setPos(sp);
-      else setPos({ x: Math.max(16, window.innerWidth - 360), y: 84 });
-      const ss = JSON.parse(localStorage.getItem(LS_SIZE) || "null"); if (ss?.w) setSize(ss);
-    } catch {}
+    const storedPage = read("deckPage");
+    setPage(storedPage);
+    pageRef.current = storedPage;
+    setOpen(read("deckOpen"));
+    setMinimized(read("deckMinimized"));
+    const storedPos = read("deckPosition");
+    setPos(storedPos ?? { x: Math.max(16, window.innerWidth - 360), y: 84 });
+    const storedSize = read("deckSize");
+    if (storedSize) setSize(storedSize);
+
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -67,7 +66,7 @@ export default function PitchWidget() {
     const targetW = wrap ? wrap.clientWidth : 300;
     if (targetW < 20) return;
     try {
-      if (taskRef.current) { try { taskRef.current.cancel(); } catch {} }
+      taskRef.current?.cancel();
       const pg = await pdf.getPage(pageRef.current);
       const base = pg.getViewport({ scale: 1 });
       const scale = (targetW * (window.devicePixelRatio || 1)) / base.width;
@@ -76,22 +75,22 @@ export default function PitchWidget() {
       canvas.height = vp.height;
       canvas.style.width = "100%";
       canvas.style.height = "auto";
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const task = pg.render({ canvasContext: ctx, viewport: vp });
+      // PDF.js v6 renders into the canvas itself; passing only a 2D context is
+      // the deprecated path (and, per its types, no longer a complete request).
+      const task = pg.render({ canvas, viewport: vp });
       taskRef.current = task;
       await task.promise;
     } catch { /* render cancelled/failed */ }
   }, []);
 
   // re-render when ready / page / size / opened
-  useEffect(() => { if (ready && open && !minimized) render(); }, [ready, page, size.w, open, minimized, render]);
+  useEffect(() => { if (ready && open && !minimized) void render(); }, [ready, page, size.w, open, minimized, render]);
 
   function go(delta: number) {
     setPage((p) => {
       const next = Math.min(numPages || 1, Math.max(1, p + delta));
       pageRef.current = next;
-      localStorage.setItem(LS_PAGE, String(next));
+      write("deckPage", next);
       return next;
     });
   }
@@ -106,7 +105,7 @@ export default function PitchWidget() {
       y: Math.min(window.innerHeight - 40, Math.max(0, e.clientY - drag.current.dy)),
     });
   }
-  function dUp() { if (drag.current) { localStorage.setItem(LS_POS, JSON.stringify(pos)); drag.current = null; } }
+  function dUp() { if (drag.current) { write("deckPosition", pos); drag.current = null; } }
 
   // resize by the corner handle
   const rs = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -118,10 +117,10 @@ export default function PitchWidget() {
       h: Math.min(window.innerHeight * 0.92, Math.max(170, rs.current.h + (e.clientY - rs.current.y))),
     });
   }
-  function rUp() { if (rs.current) { localStorage.setItem(LS_SIZE, JSON.stringify(size)); rs.current = null; } }
+  function rUp() { if (rs.current) { write("deckSize", size); rs.current = null; } }
 
-  function setOpenP(v: boolean) { setOpen(v); localStorage.setItem(LS_OPEN, v ? "1" : "0"); }
-  function setMinP(v: boolean) { setMinimized(v); localStorage.setItem(LS_MIN, v ? "1" : "0"); }
+  function setOpenP(v: boolean) { setOpen(v); write("deckOpen", v); }
+  function setMinP(v: boolean) { setMinimized(v); write("deckMinimized", v); }
 
   if (!ready) return null;
 

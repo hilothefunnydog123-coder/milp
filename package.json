@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit",
+    "typegen": "next typegen",
+    "pdf": "node --experimental-strip-types scripts/generate-pdf.mts",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/*.test.js"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

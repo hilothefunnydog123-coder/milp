@@ -10,41 +10,23 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CloudRain, Snowflake, ThermometerSnowflake, PhoneCall } from "lucide-react";
-
-interface W { temp: number; wet: boolean; snow: boolean }
+import { coordsFor } from "@/lib/locate";
+import { fetchWeather, isUrgentWeather, readWeather, type WeatherReading } from "@/lib/external";
 
 export default function WeatherUrgency({ location }: { location: string }) {
-  const [w, setW] = useState<W | null>(null);
+  const [w, setW] = useState<WeatherReading | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        // prefer the exact coordinates of the place the user picked
-        let lat: number, lng: number;
-        const stored = (() => {
-          try { const s = JSON.parse(localStorage.getItem("yn_coords") || "null"); return s && typeof s.lat === "number" ? (s as { lat: number; lng: number }) : null; } catch { return null; }
-        })();
-        if (stored) {
-          lat = stored.lat; lng = stored.lng;
-        } else {
-          const g = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(location)}&limit=1`).then((r) => r.json());
-          const c = g?.features?.[0]?.geometry?.coordinates;
-          if (!c) return;
-          lng = c[0]; lat = c[1];
-        }
-        const wx = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,precipitation,weather_code&temperature_unit=fahrenheit`
-        ).then((r) => r.json());
-        const cur = wx?.current;
-        if (!cur || cancelled) return;
-        const code = cur.weather_code ?? 0;
-        const temp = Math.round(cur.temperature_2m);
-        const snow = [71, 73, 75, 77, 85, 86].includes(code);
-        const wet = cur.precipitation > 0 || (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || snow;
-        // only alert when it genuinely matters
-        if (temp <= 42 || wet) setW({ temp, wet, snow });
-      } catch { /* hide on failure */ }
+    void (async () => {
+      // prefer the exact coordinates of the place the user picked
+      const coords = await coordsFor(location);
+      if (!coords || cancelled) return;
+      const forecast = await fetchWeather(coords.lat, coords.lng);
+      if (!forecast.ok || cancelled) return;
+      const reading = readWeather(forecast.value);
+      // only alert when it genuinely matters
+      if (isUrgentWeather(reading)) setW(reading);
     })();
     return () => { cancelled = true; };
   }, [location]);

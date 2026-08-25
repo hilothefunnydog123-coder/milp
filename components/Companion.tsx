@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { HeartHandshake, Bell, Check } from "lucide-react";
+import { read } from "@/lib/storage";
 import type { CompassPath, CompassStep } from "@/lib/types";
 
 export default function Companion({ path }: { path: CompassPath }) {
@@ -17,8 +18,7 @@ export default function Companion({ path }: { path: CompassPath }) {
   const [reply, setReply] = useState<"" | "yes" | "no">("");
 
   useEffect(() => {
-    let done: Record<string, boolean> = {};
-    try { done = JSON.parse(localStorage.getItem("yn_progress") || "{}"); } catch {}
+    const done = read("progress");
     const idx = path.steps.findIndex((s) => !done[s.id]);
     const i = idx < 0 ? 0 : idx;
     setActive(path.steps[i]);

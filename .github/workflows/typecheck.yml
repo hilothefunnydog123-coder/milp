@@ -1,0 +1,31 @@
+# The type system is only load-bearing if something actually runs it.
+#
+# `typecheck` regenerates Next's route types and then checks the whole project
+# under the strict flags in tsconfig.json — which includes lib/type-tests.ts,
+# so the compile-time assertions about the API contract, the brands and the
+# label tables are enforced here on every push.
+name: types
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck (strict, incl. compile-time type tests)
+        run: npm run typecheck
+      - name: Runtime tests for the validation layer
+        run: npm test
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

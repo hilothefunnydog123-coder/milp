@@ -4,60 +4,33 @@
 // weights mapping a person's situation -> the kinds of help that actually work.
 // Future people in similar situations get those proven resources prioritized.
 // Collective intelligence for getting housed.
+//
+// The weight table is typed by the taxonomy itself — `Partial<Record<
+// SituationTag, Partial<Record<Category, number>>>>` — so a tag or category
+// that isn't in the shared vocabulary can't be trained, scored, or (crucially)
+// loaded back out of the database. State restored from Supabase goes through a
+// schema first: a stale row from an older deploy degrades to the seed priors
+// instead of quietly poisoning everyone's recommendations.
 // ============================================================================
 
-export type Category =
-  | "safety"
-  | "shelter"
-  | "rent"
-  | "documents"
-  | "benefits"
-  | "food"
-  | "legal"
-  | "veteran"
-  | "health"
-  | "work";
+import { forgivingList, number, object, orElse, record, text, type Infer } from "./schema";
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  deriveTags,
+  isCategory,
+  isSituationTag,
+  labelFor,
+  type Category,
+  type SituationTag,
+} from "./taxonomy";
+import type { BrainStats } from "./api";
 
-export const CATEGORY_LABEL: Record<Category, string> = {
-  safety: "getting to safety",
-  shelter: "emergency shelter",
-  rent: "rent & deposit help",
-  documents: "replacing ID & documents",
-  benefits: "benefits (food, health)",
-  food: "food assistance",
-  legal: "free legal aid",
-  veteran: "veteran housing programs",
-  health: "health & mental health",
-  work: "income & employment",
-};
-
-const CATS = Object.keys(CATEGORY_LABEL) as Category[];
-
-// situation signal -> keyword triggers
-const TAGS: Record<string, string[]> = {
-  job_loss: ["lost my job", "unemployed", "laid off", "no income", "fired"],
-  vehicle: ["car", "vehicle", "van", "truck"],
-  unsheltered: ["street", "outside", "nowhere", "tent", "park"],
-  couch: ["couch", "friend", "staying with"],
-  eviction: ["evict", "behind on rent", "owe rent", "landlord", "notice"],
-  documents: ["id", "lost my id", "no id", "birth certificate", "documents", "papers", "stolen"],
-  veteran: ["veteran", "army", "navy", "marine", "air force", "served"],
-  dv: ["abuse", "domestic", "violence", "unsafe", "partner", "fleeing"],
-  family: ["kids", "children", "daughter", "son", "family", "baby"],
-  hungry: ["food", "hungry", "eat", "starving"],
-  health: ["sick", "disabled", "mental", "medication", "hospital"],
-};
-
-export function deriveTags(situation: string): string[] {
-  const t = situation.toLowerCase();
-  const tags = Object.entries(TAGS)
-    .filter(([, kws]) => kws.some((k) => t.includes(k)))
-    .map(([tag]) => tag);
-  return tags.length ? tags : ["general"];
-}
+export { CATEGORY_LABEL, deriveTags, isCategory, isSituationTag, labelFor };
+export type { Category, SituationTag };
 
 // ---- the model: weights[tag][category] ----
-type Weights = Record<string, Partial<Record<Category, number>>>;
+type Weights = Partial<Record<SituationTag, Partial<Record<Category, number>>>>;
 
 // sensible priors so it's useful on day one, then learns from real feedback
 const SEED: Weights = {
@@ -96,13 +69,13 @@ function clamp(v: number) {
 }
 
 /** Online update — a single gradient step per feedback signal. */
-export function learn(tags: string[], category: Category, helped: boolean) {
+export function learn(tags: readonly SituationTag[], category: Category, helped: boolean) {
   const target = helped ? 1 : 0;
   for (const tag of tags) {
-    weights[tag] = weights[tag] || {};
-    const w = weights[tag][category] ?? 0;
+    const row = (weights[tag] ??= {});
+    const w = row[category] ?? 0;
     // logistic-style nudge toward the observed outcome
-    weights[tag][category] = clamp(w + LR * (target - 1 / (1 + Math.exp(-w))));
+    row[category] = clamp(w + LR * (target - 1 / (1 + Math.exp(-w))));
   }
   if (helped) helpfulMarks += 1;
 }
@@ -112,47 +85,75 @@ export function noteRun() {
 }
 
 /** Rank categories for a situation by summed learned weight. */
-export function recommend(tags: string[]): Category[] {
-  const score = (c: Category) =>
-    tags.reduce((s, tag) => s + (weights[tag]?.[c] ?? 0), 0);
-  return [...CATS].sort((a, b) => score(b) - score(a)).slice(0, 4);
+export function recommend(tags: readonly SituationTag[]): Category[] {
+  const score = (c: Category) => tags.reduce((sum, tag) => sum + (weights[tag]?.[c] ?? 0), 0);
+  return [...CATEGORIES].sort((a, b) => score(b) - score(a)).slice(0, 4);
 }
 
-export function stats() {
+export function stats(): BrainStats {
   return { runs, helpfulMarks, callsMade, bedsBooked, languages: [...languages] };
 }
 
 // ---- optional Supabase persistence: makes the model learn across ALL users + deploys ----
-function client() {
+
+/** What a persisted brain row is allowed to contain. */
+const brainSnapshotSchema = object({
+  weights: orElse(record(record(number())), {}),
+  runs: orElse(number({ int: true, min: 0 }), 0),
+  helpfulMarks: orElse(number({ int: true, min: 0 }), 0),
+  callsMade: orElse(number({ int: true, min: 0 }), 0),
+  bedsBooked: orElse(number({ int: true, min: 0 }), 0),
+  languages: forgivingList(text({ max: 30 }), { max: 500 }),
+});
+
+type BrainSnapshot = Infer<typeof brainSnapshotSchema>;
+
+interface SupabaseConfig {
+  readonly url: string;
+  readonly key: string;
+}
+
+function config(): SupabaseConfig | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
   return { url, key };
 }
 
+async function connect(c: SupabaseConfig) {
+  const { createClient } = await import("@supabase/supabase-js");
+  return createClient(c.url, c.key);
+}
+
 let loaded = false;
+
+/** Only weights for tags and categories we still know about are restored. */
+function absorb(snapshot: BrainSnapshot): void {
+  for (const [tag, row] of Object.entries(snapshot.weights)) {
+    if (!isSituationTag(tag)) continue;
+    const target = (weights[tag] ??= {});
+    for (const [category, value] of Object.entries(row)) {
+      if (isCategory(category)) target[category] = clamp(value);
+    }
+  }
+  runs = snapshot.runs;
+  helpfulMarks = snapshot.helpfulMarks;
+  callsMade = snapshot.callsMade;
+  bedsBooked = snapshot.bedsBooked;
+  for (const language of snapshot.languages) languages.add(language);
+}
 
 /** Load the global brain state once per server instance. */
 export async function loadBrain(): Promise<void> {
   if (loaded) return;
   loaded = true;
-  const c = client();
+  const c = config();
   if (!c) return;
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(c.url, c.key);
+    const sb = await connect(c);
     const { data } = await sb.from("brain_state").select("data").eq("id", "global").single();
-    const d = data?.data as
-      | { weights?: Weights; runs?: number; helpfulMarks?: number; callsMade?: number; bedsBooked?: number; languages?: string[] }
-      | undefined;
-    if (d) {
-      Object.assign(weights, d.weights || {});
-      if (typeof d.runs === "number") runs = d.runs;
-      if (typeof d.helpfulMarks === "number") helpfulMarks = d.helpfulMarks;
-      if (typeof d.callsMade === "number") callsMade = d.callsMade;
-      if (typeof d.bedsBooked === "number") bedsBooked = d.bedsBooked;
-      (d.languages || []).forEach((l) => languages.add(l));
-    }
+    const parsed = brainSnapshotSchema.parse((data as { data?: unknown } | null)?.data);
+    if (parsed.ok) absorb(parsed.value);
   } catch {
     /* fall back to in-memory */
   }
@@ -160,12 +161,19 @@ export async function loadBrain(): Promise<void> {
 
 /** Persist the global brain state (fire-and-forget). */
 export async function saveBrain(): Promise<void> {
-  const c = client();
+  const c = config();
   if (!c) return;
   try {
-    const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(c.url, c.key);
-    await sb.from("brain_state").upsert({ id: "global", data: { weights, runs, helpfulMarks, callsMade, bedsBooked, languages: [...languages] } });
+    const sb = await connect(c);
+    const snapshot: BrainSnapshot = {
+      weights: weights as Record<string, Record<string, number>>,
+      runs,
+      helpfulMarks,
+      callsMade,
+      bedsBooked,
+      languages: [...languages],
+    };
+    await sb.from("brain_state").upsert({ id: "global", data: snapshot });
   } catch {
     /* ignore — demo must not break on DB hiccup */
   }

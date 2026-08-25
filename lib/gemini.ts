@@ -6,10 +6,31 @@
 //   • callGeminiGrounded() — the SAME model WITH Google Search grounding so local
 //                            resources are REAL and CITED, never hallucinated.
 // Both degrade gracefully (return "") with no key, so the app always works.
+//
+// The model's JSON gets the same treatment as any other untrusted input: it is
+// parsed through a schema (`parseModelList`, `parseModelObject`), so a reply
+// that drifts from the format we asked for degrades to a fallback instead of
+// arriving as `any` and being read as though it had obeyed.
 // ============================================================================
 
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+import { fetchJson } from "./fetch";
+import { geminiResponseSchema, geminiSources, geminiText } from "./external";
+import type { Schema } from "./schema";
+import type { Source } from "./types";
+
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+export interface GroundedReply {
+  readonly text: string;
+  readonly sources: Source[];
+}
+
+const EMPTY_GROUNDED: GroundedReply = { text: "", sources: [] };
+
+function endpoint(key: string): string {
+  return `${GEMINI_URL}?${new URLSearchParams({ key }).toString()}`;
+}
 
 /** Gemini 2.5 Flash via REST. Returns "" on no-key/error so callers fall back to a mock. */
 export async function callGemini(
@@ -19,25 +40,18 @@ export async function callGemini(
 ): Promise<string> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return "";
-  try {
-    const res = await fetch(`${GEMINI_URL}?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens,
-          temperature,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
-    });
-    if (!res.ok) return "";
-    const json = await res.json();
-    return json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-  } catch {
-    return "";
-  }
+  const result = await fetchJson(endpoint(key), geminiResponseSchema, {
+    method: "POST",
+    json: {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        maxOutputTokens,
+        temperature,
+        thinkingConfig: { thinkingBudget: 0 },
+      },
+    },
+  });
+  return result.ok ? geminiText(result.value) : "";
 }
 
 /**
@@ -47,59 +61,67 @@ export async function callGemini(
 export async function callGeminiGrounded(
   prompt: string,
   temperature: number
-): Promise<{ text: string; sources: { title: string; uri: string }[] }> {
+): Promise<GroundedReply> {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return { text: "", sources: [] };
+  if (!key) return EMPTY_GROUNDED;
+  const result = await fetchJson(endpoint(key), geminiResponseSchema, {
+    method: "POST",
+    json: {
+      contents: [{ parts: [{ text: prompt }] }],
+      tools: [{ google_search: {} }],
+      generationConfig: { temperature },
+    },
+    timeoutMs: 30_000,
+  });
+  if (!result.ok) return EMPTY_GROUNDED;
+  return { text: geminiText(result.value), sources: geminiSources(result.value) };
+}
+
+// ---------------------------------------------------------------------------
+// Reading JSON back out of a language model
+// ---------------------------------------------------------------------------
+
+function stripFences(text: string): string {
+  return text.replace(/```json/gi, "").replace(/```/g, "").trim();
+}
+
+function sliceBetween(text: string, open: string, close: string): string | null {
+  const start = text.indexOf(open);
+  const end = text.lastIndexOf(close);
+  return start === -1 || end === -1 || end < start ? null : text.slice(start, end + 1);
+}
+
+function decode(raw: string | null): unknown {
+  if (raw === null) return undefined;
   try {
-    const res = await fetch(`${GEMINI_URL}?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        tools: [{ google_search: {} }],
-        generationConfig: { temperature },
-      }),
-    });
-    if (!res.ok) return { text: "", sources: [] };
-    const json = await res.json();
-    const cand = json.candidates?.[0];
-    const text = cand?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") ?? "";
-    const chunks = cand?.groundingMetadata?.groundingChunks ?? [];
-    const sources = chunks
-      .map((c: { web?: { uri?: string; title?: string } }) => ({
-        title: c.web?.title || "",
-        uri: c.web?.uri || "",
-      }))
-      .filter((s: { uri: string }) => s.uri)
-      .slice(0, 6);
-    return { text: text.trim(), sources };
+    return JSON.parse(raw);
   } catch {
-    return { text: "", sources: [] };
+    return undefined;
   }
 }
 
-export function extractJsonArray(text: string): unknown[] {
-  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-  const start = cleaned.indexOf("[");
-  const end = cleaned.lastIndexOf("]");
-  if (start === -1 || end === -1) return [];
-  try {
-    return JSON.parse(cleaned.slice(start, end + 1)) as unknown[];
-  } catch {
-    return [];
+/**
+ * Pulls the JSON array out of a reply (fences, preamble and all) and validates
+ * every element. Malformed entries are dropped, not trusted — the model is
+ * asked for a shape, it isn't held to it.
+ */
+export function parseModelList<T>(text: string, schema: Schema<T>): T[] {
+  const decoded = decode(sliceBetween(stripFences(text), "[", "]"));
+  if (!Array.isArray(decoded)) return [];
+  const items: T[] = [];
+  for (const raw of decoded) {
+    const parsed = schema.parse(raw);
+    if (parsed.ok) items.push(parsed.value);
   }
+  return items;
 }
 
-export function extractJson(text: string): Record<string, unknown> | null {
-  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  if (start === -1 || end === -1) return null;
-  try {
-    return JSON.parse(cleaned.slice(start, end + 1)) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+/** Same, for a single JSON object. Returns null when the reply can't be trusted. */
+export function parseModelObject<T>(text: string, schema: Schema<T>): T | null {
+  const decoded = decode(sliceBetween(stripFences(text), "{", "}"));
+  if (decoded === undefined) return null;
+  const parsed = schema.parse(decoded);
+  return parsed.ok ? parsed.value : null;
 }
 
 export const IS_LIVE = !!process.env.GEMINI_API_KEY;

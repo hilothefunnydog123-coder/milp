@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Accessibility, Type, Contrast, X } from "lucide-react";
+import { read, write } from "@/lib/storage";
 
 export default function AccessibilityToggle() {
   const [open, setOpen] = useState(false);
@@ -16,17 +17,17 @@ export default function AccessibilityToggle() {
   const [contrast, setContrast] = useState(false);
 
   useEffect(() => {
-    setLarge(localStorage.getItem("yn_a11y_large") === "1");
-    setContrast(localStorage.getItem("yn_a11y_contrast") === "1");
+    setLarge(read("largeText"));
+    setContrast(read("highContrast"));
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("txt-large", large);
-    localStorage.setItem("yn_a11y_large", large ? "1" : "0");
+    write("largeText", large);
   }, [large]);
   useEffect(() => {
     document.documentElement.classList.toggle("high-contrast", contrast);
-    localStorage.setItem("yn_a11y_contrast", contrast ? "1" : "0");
+    write("highContrast", contrast);
   }, [contrast]);
 
   return (

@@ -1,0 +1,19 @@
+{
+  // Runtime tests need real JS, so this profile is the only one that emits:
+  // it compiles lib/ and tests/ to a scratch directory that `npm test` then
+  // runs with Node's built-in test runner. No test framework, no bundler.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-build",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "declaration": false,
+    "incremental": false,
+    "types": ["node"]
+  },
+  "include": ["lib/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules", "lib/type-tests.ts"]
+}

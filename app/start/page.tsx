@@ -6,6 +6,18 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Compass, ArrowLeft, ArrowRight, Mic, MicOff, Play, Users, Languages } from "lucide-react";
 import LocationAutocomplete from "@/components/LocationAutocomplete";
+import { post } from "@/lib/client";
+import { describeFailure } from "@/lib/fetch";
+import { remove, write } from "@/lib/storage";
+import {
+  toCoords,
+  toLanguage,
+  DEFAULT_LANGUAGE,
+  SUPPORTED_LANGUAGES,
+  type LanguageName,
+} from "@/lib/brand";
+import { speechRecognition, transcriptOf, type SpeechRecognitionLike } from "@/lib/speech";
+import { readStartOptions, routes } from "@/lib/routes";
 
 const CHIPS = [
   "I lost my job", "I'm staying in my car", "I'm couch-surfing", "I'm behind on rent",
@@ -18,11 +30,12 @@ export default function Start() {
   const [location, setLocation] = useState("");
   const [locationPicked, setLocationPicked] = useState(false);
   const [household, setHousehold] = useState("");
-  const [language, setLanguage] = useState("English");
+  const [language, setLanguage] = useState<LanguageName>(DEFAULT_LANGUAGE);
   const [listening, setListening] = useState(false);
   const [loading, setLoading] = useState(false);
   const [advocate, setAdvocate] = useState(false);
-  const recRef = useRef<{ stop: () => void } | null>(null);
+  const [error, setError] = useState("");
+  const recRef = useRef<SpeechRecognitionLike | null>(null);
   const [tick, setTick] = useState(0);
   const [autoRun, setAutoRun] = useState(false);
   const ran = useRef(false);
@@ -30,17 +43,17 @@ export default function Start() {
   function pickLocation(label: string, lat?: number, lng?: number) {
     setLocation(label);
     setLocationPicked(true);
-    if (typeof lat === "number" && typeof lng === "number" && isFinite(lat) && isFinite(lng)) {
-      localStorage.setItem("yn_coords", JSON.stringify({ lat, lng }));
-    } else {
-      localStorage.removeItem("yn_coords"); // map/weather will geocode the label instead
-    }
+    // Only real, in-range coordinates get stored; anything else and the map and
+    // weather panels geocode the label instead.
+    const coords = lat === undefined || lng === undefined ? null : toCoords(lat, lng);
+    if (coords) write("coords", coords);
+    else remove("coords");
   }
 
   function loadSample() {
     setSituation("I lost my job two months ago, I've been sleeping in my car, and I don't have my ID anymore. My daughter is with me.");
     pickLocation("San Jose, California, United States", 37.3382, -121.8863);
-    setLanguage("English");
+    setLanguage(DEFAULT_LANGUAGE);
     setAutoRun(true);
   }
 
@@ -61,9 +74,9 @@ export default function Start() {
   }, [autoRun, situation, locationPicked]);
 
   useEffect(() => {
-    const sp = new URLSearchParams(window.location.search);
-    setAdvocate(sp.get("for") === "advocate");
-    if (sp.get("demo") === "1") loadSample();
+    const options = readStartOptions(window.location.search);
+    setAdvocate(options.forAdvocate);
+    if (options.demo) loadSample();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,17 +85,14 @@ export default function Start() {
   }
 
   function toggleMic() {
-    type SR = { lang: string; continuous: boolean; interimResults: boolean; onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void; onend: () => void; start: () => void; stop: () => void };
-    const w = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
-    const SpeechRec = w.SpeechRecognition || w.webkitSpeechRecognition;
+    const SpeechRec = speechRecognition();
     if (!SpeechRec) { alert("Voice input isn't supported in this browser — you can type instead."); return; }
     if (listening) { recRef.current?.stop(); setListening(false); return; }
     const rec = new SpeechRec();
     rec.lang = "en-US"; rec.continuous = true; rec.interimResults = false;
     rec.onresult = (e) => {
-      let t = "";
-      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + " ";
-      setSituation((prev) => (prev ? prev + " " : "") + t.trim());
+      const heard = transcriptOf(e);
+      if (heard) setSituation((prev) => (prev ? prev + " " : "") + heard);
     };
     rec.onend = () => setListening(false);
     rec.start(); recRef.current = rec; setListening(true);
@@ -91,23 +101,26 @@ export default function Start() {
   async function findPath() {
     if (!situation.trim() || !locationPicked) return;
     setLoading(true);
-    try {
-      const res = await fetch("/api/compass", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "generate", situation, location, household, language }),
-      });
-      const data = await res.json();
-      if (data.path) {
-        localStorage.setItem("yn_path", JSON.stringify(data.path));
-        localStorage.setItem("yn_lang", language);
-        localStorage.setItem("yn_situation", situation);
-        localStorage.setItem("yn_progress", JSON.stringify({}));
-        router.push("/path");
-      }
-    } finally {
-      setLoading(false);
+    setError("");
+    // `post` narrows the reply from the action: this is `{ path, live }`, and
+    // `data.path` is a CompassPath the schema has already vouched for.
+    const result = await post("/api/compass", {
+      action: "generate",
+      situation,
+      location,
+      household,
+      language,
+    }, { timeoutMs: 90_000 });
+    if (result.ok) {
+      write("path", result.value.path);
+      write("language", language);
+      write("situation", situation);
+      write("progress", {});
+      router.push(routes.path());
+      return;
     }
+    setError(describeFailure(result.error));
+    setLoading(false);
   }
 
   // ---------- loading ----------
@@ -218,8 +231,8 @@ export default function Start() {
             </div>
             <div>
               <label className="flex items-center gap-1.5 text-sm text-muted"><Languages className="h-3.5 w-3.5" /> Show my plan in</label>
-              <select value={language} onChange={(e) => setLanguage(e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60">
-                {["English", "Español", "中文 (Chinese)", "Tiếng Việt (Vietnamese)", "Tagalog", "العربية (Arabic)", "Русский (Russian)", "Français", "Português", "한국어 (Korean)"].map((l) => (
+              <select value={language} onChange={(e) => setLanguage(toLanguage(e.target.value))} className="mt-1.5 w-full rounded-xl border border-[var(--line)] bg-white/5 px-4 py-3 outline-none focus:border-gold/60">
+                {SUPPORTED_LANGUAGES.map((l) => (
                   <option key={l} value={l} className="bg-[#0c1322]">{l}</option>
                 ))}
               </select>
@@ -235,6 +248,9 @@ export default function Start() {
           >
             Show me my path <ArrowRight className="h-5 w-5" />
           </motion.button>
+          {error && (
+            <p role="alert" className="text-center text-sm text-gold/90">{error}</p>
+          )}
           {!locationPicked && situation.trim() && (
             <p className="text-center text-xs text-gold/80">Almost there — pick your exact city above so we find the right place.</p>
           )}

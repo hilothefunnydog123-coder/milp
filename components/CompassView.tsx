@@ -14,7 +14,6 @@ import {
   Phone,
   MapPin,
   Check,
-  Circle,
   HelpCircle,
   Share2,
   Sparkles,
@@ -36,20 +35,24 @@ import Guardian from "./Guardian";
 import Companion from "./Companion";
 import ShelterMap from "./ShelterMap";
 import WeatherUrgency from "./WeatherUrgency";
-import type { CompassPath } from "@/lib/types";
-
-const STAGE_LABEL: Record<string, string> = { now: "Now", soon: "Soon", later: "The path home" };
+import { post, signal } from "@/lib/client";
+import { read, toggle } from "@/lib/storage";
+import { shareUrl } from "@/lib/share";
+import { speak as speakAloud, stopSpeaking, canSpeak } from "@/lib/speech";
+import { STAGE_LABEL, type CompassPath, type CompassStep } from "@/lib/types";
+import type { Category } from "@/lib/taxonomy";
+import type { StepId } from "@/lib/brand";
 
 export default function CompassView({ path, readOnly = false }: { path: CompassPath; readOnly?: boolean }) {
   const [done, setDone] = useState<Record<string, boolean>>({});
   const [docs, setDocs] = useState<Record<string, boolean>>({});
-  const [explain, setExplain] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState<string | null>(null);
+  const [explain, setExplain] = useState<Record<StepId, string>>({} as Record<StepId, string>);
+  const [busy, setBusy] = useState<StepId | null>(null);
   const [helped, setHelped] = useState<Record<string, boolean>>({});
   const [runs, setRuns] = useState(path.community?.runs ?? 0);
   const [copied, setCopied] = useState(false);
-  const [scripts, setScripts] = useState<Record<string, string>>({});
-  const [scriptBusy, setScriptBusy] = useState<string | null>(null);
+  const [scripts, setScripts] = useState<Record<StepId, string>>({} as Record<StepId, string>);
+  const [scriptBusy, setScriptBusy] = useState<StepId | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [qr, setQr] = useState("");
 
@@ -58,27 +61,25 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
     setQr(await QRCode.toDataURL(window.location.origin, { margin: 1, width: 220, color: { dark: "#0a0e17", light: "#ffffff" } }));
   }
 
-  async function getScript(id: string, title: string, actionText: string) {
-    if (scripts[id]) return setScripts((s) => ({ ...s, [id]: "" }));
-    setScriptBusy(id);
-    try {
-      const lang = typeof window !== "undefined" ? localStorage.getItem("yn_lang") || "English" : "English";
-      const res = await fetch("/api/compass", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "script", title, stepAction: actionText, language: lang }),
-      });
-      const data = await res.json();
-      setScripts((s) => ({ ...s, [id]: data.script || "" }));
-    } finally {
-      setScriptBusy(null);
-    }
+  async function getScript(step: CompassStep) {
+    if (scripts[step.id]) return setScripts((s) => ({ ...s, [step.id]: "" }));
+    setScriptBusy(step.id);
+    // The action is `"script"`, so this reply is `{ script: string }` — nothing
+    // else on it is even reachable.
+    const result = await post("/api/compass", {
+      action: "script",
+      title: step.title,
+      stepAction: step.action,
+      language: read("language"),
+    });
+    setScripts((s) => ({ ...s, [step.id]: result.ok ? result.value.script : "" }));
+    setScriptBusy(null);
   }
 
   function speak() {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    if (!canSpeak()) return;
     if (speaking) {
-      window.speechSynthesis.cancel();
+      stopSpeaking();
       setSpeaking(false);
       return;
     }
@@ -86,58 +87,41 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
       path.summary +
       ". Your steps: " +
       path.steps.map((s, i) => `Step ${i + 1}. ${s.title}. ${s.plain} ${s.action}`).join(" ");
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.95;
-    u.onend = () => setSpeaking(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-    setSpeaking(true);
+    setSpeaking(speakAloud(text, { onEnd: () => setSpeaking(false) }));
   }
 
-  function persist(key: string, val: Record<string, boolean>) {
-    if (!readOnly) localStorage.setItem(key, JSON.stringify(val));
-  }
-  function toggleStep(id: string) {
+  function toggleStep(id: StepId) {
     if (readOnly) return;
-    setDone((d) => { const n = { ...d, [id]: !d[id] }; persist("yn_progress", n); return n; });
+    setDone(toggle("progress", id));
   }
   function toggleDoc(label: string) {
     if (readOnly) return;
-    setDocs((d) => { const n = { ...d, [label]: !d[label] }; persist("yn_docs", n); return n; });
+    setDocs(toggle("documents", label));
   }
 
-  async function markHelped(stepId: string, category?: string) {
-    if (readOnly || helped[stepId]) return;
-    setHelped((h) => ({ ...h, [stepId]: true }));
+  /** A "this helped" tap trains the shared model; its category is a real Category. */
+  function markHelped(id: StepId, category?: Category) {
+    if (readOnly || helped[id]) return;
+    setHelped((h) => ({ ...h, [id]: true }));
     setRuns((r) => r + 1);
     if (!category) return;
-    try {
-      await fetch("/api/learn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tags: path.tags, category, helped: true }),
-      });
-    } catch {}
+    signal("/api/learn", { tags: path.tags, category, helped: true });
   }
 
-  async function explainStep(id: string, title: string, ctx: string) {
-    if (explain[id]) return setExplain((e) => ({ ...e, [id]: "" }));
-    setBusy(id);
-    try {
-      const res = await fetch("/api/compass", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "explain", term: title, context: ctx }),
-      });
-      const data = await res.json();
-      setExplain((e) => ({ ...e, [id]: data.explanation || "" }));
-    } finally {
-      setBusy(null);
-    }
+  async function explainStep(step: CompassStep) {
+    if (explain[step.id]) return setExplain((e) => ({ ...e, [step.id]: "" }));
+    setBusy(step.id);
+    const result = await post("/api/compass", {
+      action: "explain",
+      term: step.title,
+      context: `${step.plain} ${step.action}`,
+    });
+    setExplain((e) => ({ ...e, [step.id]: result.ok ? result.value.explanation : "" }));
+    setBusy(null);
   }
 
   function share() {
-    const url = `${window.location.origin}/share#${btoa(encodeURIComponent(JSON.stringify(path)))}`;
+    const url = shareUrl(window.location.origin, path);
     navigator.clipboard?.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
@@ -284,13 +268,13 @@ export default function CompassView({ path, readOnly = false }: { path: CompassP
 
                 <div className="mt-3 flex flex-wrap items-center gap-4">
                   {!readOnly && (
-                    <button onClick={() => explainStep(step.id, step.title, step.plain)} className="inline-flex items-center gap-1.5 text-sm text-gold transition hover:opacity-80">
+                    <button onClick={() => explainStep(step)} className="inline-flex items-center gap-1.5 text-sm text-gold transition hover:opacity-80">
                       <HelpCircle className="h-4 w-4" />
                       {busy === step.id ? "Explaining…" : explain[step.id] ? "Hide" : "Explain simply"}
                     </button>
                   )}
                   {!readOnly && (
-                    <button onClick={() => getScript(step.id, step.title, step.action)} className="inline-flex items-center gap-1.5 text-sm text-gold transition hover:opacity-80">
+                    <button onClick={() => getScript(step)} className="inline-flex items-center gap-1.5 text-sm text-gold transition hover:opacity-80">
                       <MessageSquareQuote className="h-4 w-4" />
                       {scriptBusy === step.id ? "Writing…" : scripts[step.id] ? "Hide script" : "What do I say?"}
                     </button>

@@ -19,19 +19,10 @@ import {
 } from "lucide-react";
 import type { LocalResource } from "@/lib/types";
 import Celebrate from "./Celebrate";
-
-interface NearbyOption { name: string; city?: string; helpsWith?: string; contact?: string }
-interface Turn { speaker: string; text: string }
-
-function extractPhone(s?: string): string {
-  if (!s) return "";
-  const m = s.match(/\+?\d[\d\s().-]{6,}\d/);
-  if (!m) return "";
-  let d = m[0].replace(/[^\d+]/g, "");
-  if (d.length === 10) d = "+1" + d;
-  else if (d.length === 11 && d[0] === "1") d = "+" + d;
-  return d;
-}
+import { get, post, signal } from "@/lib/client";
+import { GET_ENDPOINTS, type NearbyOption, type TranscriptTurn } from "@/lib/api";
+import { read } from "@/lib/storage";
+import { dialable, type CallId } from "@/lib/brand";
 
 const WATCH_TASKS = [
   "Scanning local shelters for openings",
@@ -50,7 +41,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   const [name, setName] = useState("");
   const [consent, setConsent] = useState(false);
   const [callState, setCallState] = useState<"" | "calling" | "booked">("");
-  const [transcript, setTranscript] = useState<Turn[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   const [controlUrl, setControlUrl] = useState("");
   const [note, setNote] = useState("");
   const [celebrate, setCelebrate] = useState(false);
@@ -67,9 +58,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   function hangUp() {
     timers.current.forEach(clearTimeout);
     if (bookingPoll.current) clearInterval(bookingPoll.current);
-    if (controlUrl) {
-      fetch("/api/call", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "end", controlUrl }) }).catch(() => {});
-    }
+    if (controlUrl) signal("/api/call", { action: "end", controlUrl });
     setCallState(""); setBooking(false); setTranscript([]);
     setNote("Call ended. The bed is still open if you change your mind.");
   }
@@ -78,7 +67,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
     setCallState("booked");
     setCelebrate(true);
     setTimeout(() => setCelebrate(false), 2800);
-    fetch("/api/impact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event: "booked" }) }).catch(() => {});
+    signal("/api/impact", { event: "booked" });
   }
 
   // cancel a confirmed reservation
@@ -88,7 +77,7 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   }
 
   function situation() {
-    return typeof window !== "undefined" ? localStorage.getItem("yn_situation") || "is experiencing a housing emergency" : "";
+    return read("situation") || "is experiencing a housing emergency";
   }
 
   // ---- enroll: start the autonomous watch + a real grounded nearby-city scan ----
@@ -96,27 +85,27 @@ export default function Guardian({ resources = [], location = "your area" }: { r
     setPhase("watching");
     setStep(0);
     // Kick off the REAL grounded nearby-city search (Gemini + Search grounding).
-    const nearbyPromise = fetch("/api/agent", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "nearby", location, situation: situation() }),
-    }).then((r) => r.json()).catch(() => ({ options: [] }));
+    const nearbyPromise = post("/api/agent", {
+      action: "nearby",
+      location,
+      situation: situation(),
+    });
 
     // Animate the agent working through its watch tasks.
     WATCH_TASKS.forEach((_, i) => timers.current.push(setTimeout(() => setStep(i + 1), 1100 + i * 1100)));
 
     // After the watch "finds" something, surface a vacancy (real nearby option if found).
     timers.current.push(setTimeout(async () => {
-      const data = await nearbyPromise;
-      const opt: NearbyOption | undefined = (data.options || [])[0];
-      const fallbackRes = resources.find((r) => extractPhone(r.contact));
-      setVacancy(
-        opt || {
-          name: fallbackRes?.name || "Hope Village Interim Housing",
-          city: location,
-          helpsWith: "An emergency bed just opened up.",
-          contact: fallbackRes?.contact,
-        }
-      );
+      const found = await nearbyPromise;
+      const option = found.ok ? found.value.options[0] : undefined;
+      const fallbackRes = resources.find((r) => dialable(r.contact));
+      setVacancy(option ?? {
+        name: fallbackRes?.name || "Hope Village Interim Housing",
+        city: location,
+        helpsWith: "An emergency bed just opened up.",
+        // exactOptionalPropertyTypes: an absent contact is absent, not undefined
+        ...(fallbackRes?.contact ? { contact: fallbackRes.contact } : {}),
+      });
       setPhase("alert");
     }, 1100 + WATCH_TASKS.length * 1100 + 600));
   }
@@ -125,23 +114,26 @@ export default function Guardian({ resources = [], location = "your area" }: { r
   async function book() {
     setCallState("calling");
     setTranscript([]); setNote("");
-    const number = extractPhone(vacancy?.contact) || "+15555550100";
+    const number = dialable(vacancy?.contact) || "+15555550100";
     const objective = `Book the emergency bed that just opened at ${vacancy?.name} for ${name} for tonight. Confirm the address, what time to arrive, and what to bring.`;
-    try {
-      const res = await fetch("/api/call", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, number, objective, situation: situation(), firstMessage: `Hi, I'm an assistant calling on behalf of ${name}. I understand a bed just opened up — I'd love to reserve it for them tonight.` }),
-      });
-      const data = await res.json();
-      setControlUrl(data.controlUrl || "");
-      if (data.provider === "mock") simulateBooking();
-      else pollBooking(data.callId);
-    } catch { simulateBooking(); }
+    const started = await post("/api/call", {
+      action: "start",
+      name,
+      number,
+      objective,
+      situation: situation(),
+      language: read("language"),
+      firstMessage: `Hi, I'm an assistant calling on behalf of ${name}. I understand a bed just opened up — I'd love to reserve it for them tonight.`,
+    });
+    if (!started.ok) { simulateBooking(); return; }
+    setControlUrl(started.value.controlUrl ?? "");
+    if (started.value.provider === "mock") simulateBooking();
+    else pollBooking(started.value.callId);
   }
 
   function simulateBooking() {
     const N = name || "them";
-    const script: Turn[] = [
+    const script: TranscriptTurn[] = [
       { speaker: "assistant", text: `Hi, I'm an assistant calling on behalf of ${N}. I understand a bed just opened up at ${vacancy?.name} — I'd love to reserve it for them tonight.` },
       { speaker: "caller", text: "Yes! We have one bed left. I can hold it under their name." },
       { speaker: "assistant", text: `Wonderful — please put it under ${N}. What time should they arrive and what should they bring?` },
@@ -152,30 +144,28 @@ export default function Guardian({ resources = [], location = "your area" }: { r
     timers.current.push(setTimeout(reportBooked, 900 + script.length * 2100 + 600));
   }
 
-  function pollBooking(callId: string) {
-    const started = Date.now();
+  function pollBooking(callId: CallId) {
+    const startedAt = Date.now();
     bookingPoll.current = setInterval(async () => {
-      try {
-        const r = await fetch(`/api/call/${callId}`);
-        const d = await r.json();
-        if (Array.isArray(d.transcript) && d.transcript.length) setTranscript(d.transcript);
-        if (d.status === "completed" || Date.now() - started > 180000) {
-          if (bookingPoll.current) clearInterval(bookingPoll.current);
-          reportBooked();
-        }
-      } catch { /* keep polling */ }
+      const status = await get(GET_ENDPOINTS.callStatus(callId));
+      if (!status.ok) return; // a dropped poll is fine; the next one will land
+      if (status.value.transcript.length) setTranscript(status.value.transcript);
+      if (status.value.status === "completed" || Date.now() - startedAt > 180_000) {
+        if (bookingPoll.current) clearInterval(bookingPoll.current);
+        reportBooked();
+      }
     }, 2800);
   }
 
   async function getTransport() {
     setTransportLoading(true);
-    try {
-      const r = await fetch("/api/agent", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "transport", origin: location, destination: `${vacancy?.name}${vacancy?.city ? `, ${vacancy.city}` : ""}` }),
-      });
-      setTransport((await r.json()).steps || "");
-    } finally { setTransportLoading(false); }
+    const directions = await post("/api/agent", {
+      action: "transport",
+      origin: location,
+      destination: `${vacancy?.name ?? ""}${vacancy?.city ? `, ${vacancy.city}` : ""}`,
+    });
+    setTransport(directions.ok ? directions.value.steps : "");
+    setTransportLoading(false);
   }
 
   // ---------- IDLE ----------

@@ -7,67 +7,95 @@
 //   "explain":  a plain-language explainer for a step or term (Gemini).
 //   "script":   a calm, ready-to-read phone script for a step (Gemini).
 // Every action degrades to deterministic fallbacks when no Gemini key is set.
+//
+// The action union comes from the contract, so the switch below is checked for
+// exhaustiveness: add an action to lib/api.ts and this file stops compiling
+// until it is handled. Gemini's JSON is parsed through `modelPathSchema`
+// rather than cast, which is what lets `sanitize` be an assembly step instead
+// of thirty lines of defensive `String(x || "").slice(...)`.
 // ============================================================================
-import { NextRequest, NextResponse } from "next/server";
-import {
-  callGemini,
-  callGeminiGrounded,
-  extractJson,
-  extractJsonArray,
-  IS_LIVE,
-} from "@/lib/gemini";
-import { RESOURCES, RESOURCE_KEYS } from "@/lib/resources";
+import { NextResponse, type NextRequest } from "next/server";
+import { callGemini, callGeminiGrounded, parseModelList, parseModelObject, IS_LIVE } from "@/lib/gemini";
 import { mockPath, plainExplainMock } from "@/lib/mock";
+import { badRequest, parseBody } from "@/lib/route";
+import { clamped, forgivingList, object, orElse, optional, type Infer } from "@/lib/schema";
+import { nowIso, stepId, type LanguageName } from "@/lib/brand";
+import { ALWAYS_OFFERED, resourceKeySchema, type ResourceKey } from "@/lib/resources";
 import {
   addLanguage,
-  CATEGORY_LABEL,
   deriveTags,
+  labelFor,
   loadBrain,
   noteRun,
   recommend,
   saveBrain,
   stats,
-  type Category,
 } from "@/lib/brain";
-import type { CompassPath, CompassStep, Intake, LocalResource, Source, Stage } from "@/lib/types";
+import { categorySchema } from "@/lib/taxonomy";
+import {
+  compassPathSchema,
+  localResourceSchema,
+  stageSchema,
+  type CompassPath,
+  type CompassStep,
+  type Intake,
+  type LocalResource,
+  type Source,
+} from "@/lib/types";
+import { assertNever } from "@/lib/typed";
+import type { ActionPayload, ResponseOf } from "@/lib/api";
 
-const STAGES: Stage[] = ["now", "soon", "later"];
+type Reply<A extends "generate" | "explain" | "script"> = ResponseOf<"/api/compass", A>;
 
-function sanitize(raw: Record<string, unknown>, intake: Intake): CompassPath {
-  const rawSteps = Array.isArray(raw.steps) ? (raw.steps as Record<string, unknown>[]) : [];
-  const cats = ["safety", "shelter", "rent", "documents", "benefits", "food", "legal", "veteran", "health", "work"];
-  const steps: CompassStep[] = rawSteps.slice(0, 9).map((s, i) => {
-    const stage = STAGES.includes(s.stage as Stage) ? (s.stage as Stage) : "soon";
-    const category = typeof s.category === "string" && cats.includes(s.category) ? s.category : undefined;
-    return {
-      id: `s${i + 1}`,
-      title: String(s.title || "Next step").slice(0, 80),
-      stage,
-      plain: String(s.plain || "").slice(0, 400),
-      action: String(s.action || "").slice(0, 280),
-      docs: Array.isArray(s.docs) ? (s.docs as unknown[]).map((d) => String(d)).slice(0, 5) : [],
-      category,
-    };
-  });
-  const resources = Array.isArray(raw.resources)
-    ? (raw.resources as unknown[]).map(String).filter((k) => RESOURCE_KEYS.includes(k))
-    : [];
-  // always offer crisis support
-  if (!resources.includes("crisis")) resources.push("crisis");
-  const documents = Array.isArray(raw.documents)
-    ? (raw.documents as unknown[]).map(String).slice(0, 8)
-    : [];
+// ---------------------------------------------------------------------------
+// What we accept back from the model — declared, not assumed
+// ---------------------------------------------------------------------------
+
+const modelStepSchema = object({
+  title: orElse(clamped(80), "Next step"),
+  stage: orElse(stageSchema, "soon"),
+  plain: orElse(clamped(400), ""),
+  action: orElse(clamped(280), ""),
+  docs: forgivingList(clamped(120), { max: 5 }),
+  category: optional(categorySchema),
+});
+
+const modelPathSchema = object({
+  summary: orElse(clamped(600), ""),
+  steps: forgivingList(modelStepSchema, { max: 9 }),
+  documents: forgivingList(clamped(120), { max: 8 }),
+  /** the model may only ever name keys from our curated table */
+  resources: forgivingList(resourceKeySchema, { max: 16 }),
+});
+
+type ModelPath = Infer<typeof modelPathSchema>;
+
+/** Turns a validated model reply into a real CompassPath, filling any gaps. */
+function assemble(raw: ModelPath, intake: Intake): CompassPath {
+  const steps: CompassStep[] = raw.steps.map((step, i) => ({
+    id: stepId(i + 1),
+    title: step.title,
+    stage: step.stage,
+    plain: step.plain,
+    action: step.action,
+    docs: step.docs,
+    ...(step.category ? { category: step.category } : {}),
+  }));
+  const resources: ResourceKey[] = raw.resources.includes(ALWAYS_OFFERED)
+    ? raw.resources
+    : [...raw.resources, ALWAYS_OFFERED];
+  const fallback = mockPath(intake);
   return {
-    summary: String(raw.summary || "").slice(0, 600),
-    steps: steps.length ? steps : mockPath(intake).steps,
-    documents: documents.length ? documents : mockPath(intake).documents,
+    summary: raw.summary,
+    steps: steps.length ? steps : fallback.steps,
+    documents: raw.documents.length ? raw.documents : fallback.documents,
     resources: Array.from(new Set(resources)),
     localResources: [],
     sources: [],
     tags: [],
     community: { runs: 0, top: [] },
     location: intake.location || "your area",
-    createdAt: new Date().toISOString(),
+    createdAt: nowIso(),
   };
 }
 
@@ -87,81 +115,68 @@ Return ONLY a JSON array, no prose:
 If you genuinely cannot find real local ones, return [].`;
 
   const { text, sources } = await callGeminiGrounded(prompt, 0.2);
-  const arr = extractJsonArray(text);
-  const localResources: LocalResource[] = arr
-    .filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null)
-    .slice(0, 5)
-    .map((x) => ({
-      name: String(x.name || "").slice(0, 100),
-      helpsWith: String(x.helpsWith || "").slice(0, 160),
-      contact: x.contact ? String(x.contact).slice(0, 120) : undefined,
-    }))
-    .filter((r) => r.name);
-  return { localResources, sources };
+  return { localResources: parseModelList(text, localResourceSchema).slice(0, 5), sources };
 }
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const action = body.action as string;
+// ---------------------------------------------------------------------------
+// Handlers, one per action
+// ---------------------------------------------------------------------------
 
-  if (action === "explain") {
-    const term = String(body.term || "").slice(0, 120);
-    const context = String(body.context || "").slice(0, 300);
-    const prompt = `You help people experiencing housing insecurity. In 2-3 short, warm, plain-language sentences (6th-grade reading level, no jargon, no condescension), explain what this means and why it matters for getting housed. Be encouraging and concrete.
+async function explain(body: ActionPayload<"/api/compass", "explain">): Promise<Reply<"explain">> {
+  const prompt = `You help people experiencing housing insecurity. In 2-3 short, warm, plain-language sentences (6th-grade reading level, no jargon, no condescension), explain what this means and why it matters for getting housed. Be encouraging and concrete.
 
-TERM/STEP: ${term}
-CONTEXT: ${context}
+TERM/STEP: ${body.term}
+CONTEXT: ${body.context}
 
 Reply with only the explanation, no preamble.`;
-    let reply = await callGemini(prompt, 300, 0.4);
-    if (!reply) reply = plainExplainMock(term);
-    return NextResponse.json({ explanation: reply });
-  }
+  const reply = await callGemini(prompt, 300, 0.4);
+  return { explanation: reply || plainExplainMock(body.term) };
+}
 
-  // ---- "What do I say?" — a calm, ready-to-read script for a call or visit ----
-  if (action === "script") {
-    const title = String(body.title || "").slice(0, 120);
-    const act = String(body.stepAction || "").slice(0, 280);
-    const language = String(body.language || "English").slice(0, 30);
-    const prompt = `Someone experiencing housing insecurity needs to make this call/visit but feels anxious about what to say. Write them a short, calm script they can read aloud, first-person ("Hi, my name is..."), 4-6 simple lines. Include what to ask for and one question to confirm next steps. Warm and confident, no jargon. Write it in ${language}.
+/** "What do I say?" — a calm, ready-to-read script for a call or visit. */
+async function script(body: ActionPayload<"/api/compass", "script">): Promise<Reply<"script">> {
+  const prompt = `Someone experiencing housing insecurity needs to make this call/visit but feels anxious about what to say. Write them a short, calm script they can read aloud, first-person ("Hi, my name is..."), 4-6 simple lines. Include what to ask for and one question to confirm next steps. Warm and confident, no jargon. Write it in ${body.language}.
 
-THE STEP: ${title}
-WHAT THEY NEED TO DO: ${act}
+THE STEP: ${body.title}
+WHAT THEY NEED TO DO: ${body.stepAction}
 
 Reply with ONLY the script lines, no preamble.`;
-    let reply = await callGemini(prompt, 400, 0.5);
-    if (!reply) {
-      reply = `Hi, my name is ___. I'm experiencing a housing emergency and I was hoping you could help me.\n\nI'm trying to: ${act}\n\nCould you tell me what I need to bring, and what the next step is?\n\nThank you so much for your time.`;
-    }
-    return NextResponse.json({ script: reply });
-  }
+  const reply = await callGemini(prompt, 400, 0.5);
+  if (reply) return { script: reply };
+  return {
+    script:
+      `Hi, my name is ___. I'm experiencing a housing emergency and I was hoping you could help me.\n\n` +
+      `I'm trying to: ${body.stepAction}\n\n` +
+      `Could you tell me what I need to bring, and what the next step is?\n\n` +
+      `Thank you so much for your time.`,
+  };
+}
 
-  if (action === "generate") {
-    const intake: Intake = {
-      situation: String(body.situation || "").slice(0, 1200),
-      location: String(body.location || "").slice(0, 80),
-      household: String(body.household || "").slice(0, 120),
-    };
+async function generate(body: ActionPayload<"/api/compass", "generate">): Promise<Reply<"generate">> {
+  const intake: Intake = {
+    situation: body.situation,
+    location: body.location,
+    household: body.household,
+  };
 
-    // 1. read situation signals + what the learning model recommends
-    await loadBrain();
-    const tags = deriveTags(intake.situation);
-    noteRun();
-    saveBrain();
-    const recommended = recommend(tags);
-    const recLabels = recommended.map((c: Category) => CATEGORY_LABEL[c]);
+  // 1. read situation signals + what the learning model recommends
+  await loadBrain();
+  const tags = deriveTags(intake.situation);
+  noteRun();
+  void saveBrain();
+  const recLabels = recommend(tags).map(labelFor);
 
-    // 2. research REAL local resources first (grounded), so the path can name them
-    const local = await findLocalResources(intake);
-    const realList = local.localResources.length
-      ? local.localResources
-          .map((r) => `- ${r.name}${r.contact ? ` (${r.contact})` : ""}: ${r.helpsWith}`)
-          .join("\n")
-      : "(none found — give the next concrete action without naming an org)";
+  // 2. research REAL local resources first (grounded), so the path can name them
+  const local = await findLocalResources(intake);
+  const realList = local.localResources.length
+    ? local.localResources
+        .map((r) => `- ${r.name}${r.contact ? ` (${r.contact})` : ""}: ${r.helpsWith}`)
+        .join("\n")
+    : "(none found — give the next concrete action without naming an org)";
 
-    const language = String(body.language || "English").slice(0, 30);
-    addLanguage(language);
-    const prompt = `You are a compassionate, expert housing navigator helping someone experiencing housing insecurity. Build a clear, dignified, step-by-step PATH to stable housing. Warm, plain language (6th-grade reading level). Treat them as a capable person, never a case file. Specific and hopeful, never preachy.
+  const language: LanguageName = body.language;
+  addLanguage(language);
+  const prompt = `You are a compassionate, expert housing navigator helping someone experiencing housing insecurity. Build a clear, dignified, step-by-step PATH to stable housing. Warm, plain language (6th-grade reading level). Treat them as a capable person, never a case file. Specific and hopeful, never preachy.
 
 WRITE ALL TEXT (summary, every step's title/plain/action, documents) in ${language}.
 
@@ -185,15 +200,33 @@ Return ONLY raw JSON, no markdown:
   "documents": ["<vital documents to gather, plain labels>"]
 }`;
 
-    const raw = await callGemini(prompt, 2000, 0.5);
-    const parsed = extractJson(raw);
-    const path = parsed ? sanitize(parsed, intake) : mockPath(intake);
-    path.localResources = local.localResources;
-    path.sources = local.sources;
-    path.tags = tags;
-    path.community = { runs: stats().runs, top: recLabels };
-    return NextResponse.json({ path, live: IS_LIVE });
-  }
+  const raw = await callGemini(prompt, 2000, 0.5);
+  const parsed = parseModelObject(raw, modelPathSchema);
+  const path: CompassPath = {
+    ...(parsed ? assemble(parsed, intake) : mockPath(intake)),
+    localResources: local.localResources,
+    sources: local.sources,
+    tags: [...tags],
+    community: { runs: stats().runs, top: recLabels },
+  };
+  // the path also has to satisfy its own schema before it leaves the building
+  const checked = compassPathSchema.parse(path);
+  return { path: checked.ok ? checked.value : mockPath(intake), live: IS_LIVE };
+}
 
-  return NextResponse.json({ error: "Unknown action." }, { status: 400 });
+export async function POST(req: NextRequest) {
+  const parsed = await parseBody("/api/compass", req);
+  if (!parsed.ok) return badRequest(parsed.error);
+  const body = parsed.value;
+
+  switch (body.action) {
+    case "explain":
+      return NextResponse.json<Reply<"explain">>(await explain(body));
+    case "script":
+      return NextResponse.json<Reply<"script">>(await script(body));
+    case "generate":
+      return NextResponse.json<Reply<"generate">>(await generate(body));
+    default:
+      return assertNever(body, "compass action");
+  }
 }

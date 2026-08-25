@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Compass, RotateCcw } from "lucide-react";
 import CompassView from "@/components/CompassView";
 import Celebrate from "@/components/Celebrate";
+import { read } from "@/lib/storage";
 import type { CompassPath } from "@/lib/types";
 
 export default function PathPage() {
@@ -14,17 +15,16 @@ export default function PathPage() {
   const [ready, setReady] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
 
+  // `read("path")` is total: a missing, stale or corrupted stored path all come
+  // back as null, so there is no parse to guard and no half-path to render.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("yn_path");
-      if (raw) {
-        setPath(JSON.parse(raw));
-        setCelebrate(true);
-        const t = setTimeout(() => setCelebrate(false), 2800);
-        return () => clearTimeout(t);
-      }
-    } catch {}
+    const stored = read("path");
+    setPath(stored);
     setReady(true);
+    if (!stored) return undefined;
+    setCelebrate(true);
+    const timer = setTimeout(() => setCelebrate(false), 2800);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

@@ -60,7 +60,7 @@ during a demo.
 
 ## Tech stack
 
-- Next.js (App Router) and TypeScript
+- Next.js (App Router) and TypeScript — end-to-end typed, see "Type safety" below
 - Tailwind CSS and Framer Motion for the UI and motion
 - Gemini 2.5 Flash (REST) for reasoning and grounded search
 - Vapi for outbound phone calls
@@ -91,11 +91,34 @@ app/
     impact/route.ts      real, persisted usage tallies
     geocode/route.ts     geocoding helper (also done client-side)
 lib/
+  ---- the type layer (see "Type safety", below) ----
+  typed.ts              Result, exhaustiveness guards, and the Equal/Expect assertions
+  schema.ts             the validator that the static types are inferred from
+  brand.ts              nominal types (Latitude, CallId, IsoTimestamp, LanguageName, ...)
+  api.ts                the wire contract: one declaration per endpoint, both sides
+  client.ts             typed API client — the action you send picks the reply type
+  fetch.ts              one validated fetch; every network call goes through it
+  route.ts              route-handler plumbing: parse a body against its contract
+  storage.ts            schema-checked localStorage, keyed by a registry
+  external.ts           typed adapters for Photon, Nominatim, Overpass, Open-Meteo, Vapi, Gemini
+  share.ts              encode/decode (and validate) a whole path in a URL fragment
+  routes.ts             pages and query flags, shared by whoever writes and reads them
+  taxonomy.ts           the shared vocabulary: Category and SituationTag
+  icons.ts              the icon registry a resource's `icon` name is checked against
+  speech.ts, locate.ts  browser voice APIs; "where is this person, exactly?"
+  type-tests.ts         compile-time assertions — no runtime, `tsc` failing IS the test failing
+  ---- the app ----
   gemini.ts              Gemini access (plain + grounded) + helpers
   brain.ts               the online-learning recommender + Supabase persistence
   resources.ts          curated, REAL universal systems (211, Coordinated Entry, vital records, etc.)
   mock.ts               deterministic fallback path generator
-  types.ts              shared types
+  types.ts              the domain model, declared as schemas and inferred into types
+scripts/
+  generate-pdf.mts      renders slides.html to the pitch PDF (typed, run straight from TS)
+tests/
+  lib.test.ts           runtime tests for the validation layer (node:test, no framework)
+types/
+  puppeteer.d.ts        ambient types for the deck renderer's tool-only dependency
 components/
   Landing.tsx           hero, problem stats, how-it-works, dignity, impact, CTAs
   CompassView.tsx       the full plan view (composes everything below)
@@ -112,12 +135,83 @@ components/
 
 ---
 
+## Type safety
+
+Everything that enters this app arrives as `any`: `await req.json()`,
+`await res.json()`, `JSON.parse(localStorage.getItem(...))`, a third-party REST
+payload, a language model's best guess at the JSON we asked for. Declaring an
+interface over that is a promise, not a check — the interface says `string`
+while the wire says `null`, and nobody finds out until someone in a housing
+emergency is looking at an empty panel.
+
+So the boundaries are declared once, as schemas, and the TypeScript types are
+*derived* from them:
+
+```ts
+export const compassRequestSchema = variant("action", {
+  generate: { situation: clamped(1200), location: clamped(80), ... },
+  explain:  { term: clamped(120), context: clamped(300) },
+  script:   { title: clamped(120), stepAction: clamped(280), ... },
+});
+```
+
+That single declaration gives the route its parameter types, the client its
+argument types, and both ends their runtime validation — so the three can never
+drift apart. Sending an action picks the reply type with it:
+
+```ts
+const reply = await post("/api/compass", { action: "script", ... });
+//    reply.value is { script: string }
+//    change "script" to "generate" and it becomes { path: CompassPath; live: boolean }
+```
+
+The same idea runs through the rest of the codebase:
+
+- **Nominal types.** A latitude and a longitude are both `number`; a call id and
+  a language name are both `string`. `lib/brand.ts` tags them so they can't be
+  swapped, and the only way to get one is to pass a check — so holding the type
+  means the value was validated.
+- **Closed vocabularies.** `Category`, `SituationTag`, `Stage`, `ResourceKey`
+  and the icon names are unions, not strings. Label tables are
+  `Record<Union, string>`, so adding a member without teaching the UI to render
+  it doesn't compile.
+- **Exhaustive handlers.** Route handlers `switch` over a parsed discriminated
+  union and end in `assertNever` — add an action to the contract and the route
+  stops compiling until it's handled.
+- **Degrade, don't crash.** Untrusted input (a shared link, a stale
+  localStorage entry, a model reply that ignored the format) is parsed, not
+  cast. A resource key we removed, a renamed signal or a corrupt timestamp is
+  dropped or defaulted; the person still gets their path.
+- **Both kinds of test.** `lib/type-tests.ts` proves the types line up and
+  `tests/lib.test.ts` proves the validator actually validates. Both matter: the
+  first version of the runtime suite found a schema that type-checked perfectly
+  and threw on import, because a `declare const` symbol has no runtime value.
+
+```bash
+npm run typecheck   # next typegen + tsc --noEmit, incl. the compile-time assertions
+npm test            # runtime tests for the validation layer
+```
+
+`tsconfig.json` runs above `strict`: `noUncheckedIndexedAccess`,
+`exactOptionalPropertyTypes`, `noImplicitReturns`,
+`noFallthroughCasesInSwitch`, `noUnusedLocals`/`noUnusedParameters`. Next's
+`typedRoutes` is on, so `href`s are checked against the routes that exist, and
+route handlers take their params from `RouteContext<'/api/call/[id]'>`.
+
+---
+
 ## Run locally
 
 ```bash
 npm install
 cp .env.example .env.local   # add keys (all optional; the app runs without them)
 npm run dev
+```
+
+```bash
+npm run typecheck   # strict typecheck, including the compile-time type tests
+npm test            # runtime tests for the validation layer
+npm run pdf         # re-render the pitch deck to YNorth-Pitch-Deck.pdf
 ```
 
 Open http://localhost:3000.

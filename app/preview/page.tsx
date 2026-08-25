@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Compass, ExternalLink, Pause, Play, RotateCcw } from "lucide-react";
+import { routes } from "@/lib/routes";
 
 export default function Preview() {
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -45,6 +46,8 @@ export default function Preview() {
     }
     const maxScroll = () => { const d = docEl(); const w = win(); return d && w ? d.scrollHeight - w.innerHeight : 0; };
     const waitLoad = () => new Promise<void>((res) => { const h = () => { frame.removeEventListener("load", h); res(); }; frame.addEventListener("load", h); });
+    // Route strings come from lib/routes so the tour can't drive to a page or
+    // a query flag that no longer exists.
     const nav = (url: string) => { frame.src = url; return waitLoad(); };
     async function waitPath(path: string, timeout = 38000) {
       const t0 = Date.now();
@@ -57,12 +60,12 @@ export default function Preview() {
 
     (async function tour() {
       while (!stopped.current) {
-        await nav("/"); if (stopped.current) break;
+        await nav(routes.home()); if (stopped.current) break;
         await sleep(1400); await untilResumed();
         await smoothScroll(maxScroll(), 12000); if (stopped.current) break;
         await sleep(900); await untilResumed();
-        await nav("/start?demo=1"); if (stopped.current) break;
-        await waitPath("/path"); if (stopped.current) break;
+        await nav(routes.start({ demo: true })); if (stopped.current) break;
+        await waitPath(routes.path()); if (stopped.current) break;
         await sleep(1800); await untilResumed();
         await smoothScroll(maxScroll(), 17000); if (stopped.current) break;
         await sleep(1500);

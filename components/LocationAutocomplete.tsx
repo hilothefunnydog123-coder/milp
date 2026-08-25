@@ -9,8 +9,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Check, Loader2 } from "lucide-react";
-
-interface Place { label: string; lat: number; lng: number }
+import { fetchJson } from "@/lib/fetch";
+import { photonResponseSchema, photonSuggestions, photonUrl, type PlaceSuggestion } from "@/lib/external";
 
 export default function LocationAutocomplete({
   value,
@@ -23,7 +23,7 @@ export default function LocationAutocomplete({
   onPick: (label: string, lat?: number, lng?: number) => void;
   onType: (text: string) => void;
 }) {
-  const [results, setResults] = useState<Place[]>([]);
+  const [results, setResults] = useState<PlaceSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -40,27 +40,15 @@ export default function LocationAutocomplete({
     if (picked || value.trim().length < 2) { setResults([]); return; }
     setLoading(true);
     const t = setTimeout(async () => {
-      try {
-        const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(value)}&lang=en&limit=6&osm_tag=place`);
-        const j = await r.json();
-        const seen = new Set<string>();
-        const places: Place[] = [];
-        for (const f of j.features || []) {
-          const p = f.properties || {};
-          const c = f.geometry?.coordinates;
-          if (!p.name || !c) continue;
-          const label = [p.name, p.state, p.country].filter(Boolean).join(", ");
-          if (seen.has(label)) continue;
-          seen.add(label);
-          places.push({ label, lat: c[1], lng: c[0] });
-        }
-        setResults(places);
-        setOpen(true);
-      } catch {
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
+      // Photon's GeoJSON is validated and de-duplicated in one place; a feature
+      // without a name or usable coordinates never becomes a suggestion.
+      const found = await fetchJson(
+        photonUrl(value, { limit: 6, placesOnly: true }),
+        photonResponseSchema
+      );
+      setResults(found.ok ? photonSuggestions(found.value) : []);
+      setOpen(found.ok);
+      setLoading(false);
     }, 280);
     return () => clearTimeout(t);
   }, [value, picked]);
